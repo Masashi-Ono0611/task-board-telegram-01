@@ -25,7 +25,7 @@ bot.command('webapp', (ctx: any) => {
   ctx.reply('Open Web App', {
     reply_markup: {
       inline_keyboard: [[
-        { text: "Open App", web_app: { url: WEBAPP_URL || '' }}
+        { text: "Open App", url: WEBAPP_URL || '' }
       ]]
     }
   });
