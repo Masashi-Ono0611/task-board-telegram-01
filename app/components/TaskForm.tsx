@@ -28,25 +28,32 @@ export default function TaskForm({ groupId }: TaskFormProps) {
       setError(null);
     } catch (err) {
       console.error('Error adding task:', err);
-      setError('Failed to add task');
+      setError('タスクの追加に失敗しました');
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <input
-        type="text"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="Add a new task"
-        className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
-      <button
-        type="submit"
-        className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-colors"
-      >
-        Add Task
-      </button>
-    </form>
+    <div className="space-y-4">
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      )}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="新しいタスクを追加"
+          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button
+          type="submit"
+          className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-colors"
+        >
+          タスクを追加
+        </button>
+      </form>
+    </div>
   );
 } 
