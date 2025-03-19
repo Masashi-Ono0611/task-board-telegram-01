@@ -4,7 +4,6 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
     "start": "ts-node bot/index.ts",
     "lint": "next lint",
     "bot:dev": "ts-node bot/index.ts"
