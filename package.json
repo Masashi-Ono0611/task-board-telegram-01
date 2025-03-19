@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "bot:dev": "ts-node bot/index.ts"
+    "bot:dev": "ts-node bot/index.ts",
+    "bot:start": "ts-node bot/index.ts"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.0",
