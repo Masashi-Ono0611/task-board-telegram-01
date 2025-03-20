@@ -4,7 +4,6 @@ import { Suspense, useEffect, useState } from 'react';
 import Image from "next/image";
 import TaskList from "./components/TaskList";
 import TaskForm from "./components/TaskForm";
-import WebApp from "@twa-dev/sdk";
 import dynamic from 'next/dynamic';
 
 // クライアントサイドのみのレンダリングのためのコンポーネント
