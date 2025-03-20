@@ -1,45 +1,79 @@
-# Task Board Telegram App
+# Task Board for Telegram
 
-Telegramミニアプリとボットを組み合わせたタスク管理アプリケーション。
+A task management mini-app for Telegram groups that allows users to create, manage, and track tasks within Telegram.
 
-## プロジェクト構成
+## Technology Stack
 
-このプロジェクトは以下の2つの主要コンポーネントで構成されています：
+### Frontend
+- **Framework**: Next.js 15
+- **UI Library**: Chakra UI v2
+- **Language**: TypeScript
+- **State Management**: React Hooks
+- **Telegram Integration**: 
+  - `@telegram-apps/sdk-react` - For Telegram Mini App SDK integration
+  - `@twa-dev/sdk` - For Telegram Web App functionality
 
-1. **Web アプリケーション（Next.js）**
-   - Telegramミニアプリとして動作
-   - タスクの作成、表示、更新、削除機能を提供
-   - Firebase Realtime Databaseでデータを管理
+### Backend
+- **Database**: Firebase Realtime Database
+- **Authentication**: Firebase Authentication (planned)
+- **Hosting**: Vercel (web app), Railway.app (bot)
+
+### Bot
+- **Framework**: Telegraf.js
+- **Language**: TypeScript/Node.js
+- **Runtime**: Node.js
+
+## Architecture
+
+The application consists of two main components:
+
+1. **Web Application (Next.js)**
+   - Functions as a Telegram mini-app
+   - Provides UI for task management
+   - Communicates with Firebase database
+   - Supports dark/light mode based on system preferences
+   - Responsive design for mobile devices
 
 2. **Telegram Bot**
-   - ミニアプリへのアクセスを提供
-   - コマンドベースのインタラクション
-   - グループ固有のタスク管理を実現
+   - Provides entry point to the mini-app
+   - Handles command-based interactions
+   - Enables group-specific task management
+   - Processes Telegram WebApp callbacks
 
-## ホスティング構成
+## Key Features
 
-このプロジェクトは以下のように分散ホスティングされています：
+- Group-specific task boards
+- Real-time task updates
+- Dark/light mode support
+- Task creation, completion, and deletion
+- Optimized for mobile devices
+- Responsive and accessible UI
 
-- **Webアプリケーション**: [Vercel](https://vercel.com)
-  - Next.jsアプリケーションのホスティング
-  - 自動デプロイメント
+## Getting Started
 
-- **データベース**: [Firebase](https://firebase.google.com)
-  - タスクデータの保存
-  - リアルタイム同期
+### Prerequisites
+- Node.js (v18 or newer)
+- npm or yarn
+- Telegram Bot Token
+- Firebase project with Realtime Database
 
-- **Telegram Bot**: [Railway.app](https://railway.app)
-  - 24/7稼働のボットホスティング
-  - 自動デプロイメント
+### Development Setup
 
-## 環境変数の設定
+1. Clone the repository
+```bash
+git clone https://github.com/your-username/task-board-telegram.git
+cd task-board-telegram
+```
 
-### ローカル開発環境
-プロジェクトのルートディレクトリに`.env.local`ファイルを作成し、以下の環境変数を設定します：
+2. Install dependencies
+```bash
+npm install
+```
 
+3. Create a `.env.local` file in the project root with the required environment variables:
 ```env
 # Development Bot Configuration
-BOT_TOKEN=8027369590:AAF_15giPci2zsUJAGdRfRCR9g4CGWm7SZA  # ローカル開発用ボット (@local_taskboard_masa_bot)
+BOT_TOKEN=your_bot_token
 WEBAPP_URL=http://localhost:3000
 
 # Firebase Configuration
@@ -51,114 +85,37 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 ```
 
-### デプロイメント環境
-
-#### Vercel（Webアプリケーション）
-Vercelのプロジェクト設定で、Firebase関連の環境変数を設定します。
-
-#### Railway.app（Telegram Bot）
-Railway.appのダッシュボードで以下の手順で環境変数を設定します：
-
-1. 「Variables」タブを開く
-2. 「Raw Editor」ボタンをクリック
-3. 以下の環境変数を設定：
-   ```
-   # Production Bot Configuration
-   BOT_TOKEN=8073261576:AAGeiHFrMEFPgKHZeSLDbINxc996FCAwy0o  # 本番用ボット (@dev_test_masashi_bot)
-   WEBAPP_URL=https://task-board-telegram-01.vercel.app
-   
-   # 追加の環境変数（必要に応じて）
-   NODE_ENV=production
-   ```
-
-**注意**: 環境変数の設定時に以下のエラーが発生した場合：
-```
-ERROR: invalid key-value pair "= BOT_TOKEN=...": empty key
-```
-これは環境変数の形式に問題がある可能性があります。Raw Editorを使用することで、正しい形式で環境変数を設定できます。
-
-## 開発環境のセットアップ
-
+4. Start the development server
 ```bash
-# 依存関係のインストール
-npm install
-
-# 開発サーバーの起動（Webアプリケーション）
+# For the web app
 npm run dev
 
-# 開発環境でのボットの起動
+# For the bot (in a separate terminal)
 npm run bot:dev
 ```
 
-## グループ固有のタスク管理
+## Deployment
 
-このアプリケーションはTelegramグループごとに個別のタスクリストを管理します：
+### Web Application (Vercel)
 
-1. ユーザーがTelegramグループで`/webapp`コマンドを実行
-2. ボットがそのグループのIDを取得してBase64エンコード
-3. エンコードしたIDをURLパラメータとしてWebアプリに渡す
-4. Webアプリ側でIDをデコードして取得
-5. そのグループIDに紐づくタスクをFirebaseから取得
-6. 取得したタスクを画面に表示
+The application is deployed to Vercel with the following workflow:
 
-### ローカルでのテスト方法
-
-実際のグループIDを使わずにテストする場合：
-```
-http://localhost:3000?startapp=テストID（Base64エンコード）
-```
-
-例：`test-group-1`というIDをテストする場合：
-```
-http://localhost:3000?startapp=dGVzdC1ncm91cC0x
-```
-
-## デプロイメント設定
-
-### Telegram Bot用の設定
-
-#### package.jsonの設定
-```json
-{
-  "scripts": {
-    "start": "ts-node bot/index.ts",
-    "bot:dev": "NODE_ENV=development ts-node --esm bot/index.ts",
-    "bot:start": "NODE_ENV=production ts-node --esm bot/index.ts"
-  }
-}
-```
-
-#### 必要な依存関係
-以下のパッケージが`dependencies`（not `devDependencies`）にあることを確認：
-- `ts-node`
-- `typescript`
-- `@types/node`
-
-これらは本番環境でのTypeScriptの実行に必要です。
-
-## デプロイフロー
-
-### 1. 開発時のブランチ管理とVercelデプロイ
-
-1. 機能開発用のブランチを作成
+1. Create a feature branch for development
 ```bash
 git checkout -b feature/your-feature-name
 ```
 
-2. 開発完了後、変更をプッシュ
+2. Push changes after development is complete
 ```bash
 git add .
 git commit -m "feat: your commit message"
 git push origin feature/your-feature-name
 ```
 
-3. Vercelで自動的にプレビューデプロイが作成される
-- URLフォーマット: `https://task-board-telegram-01-git-[branch-name]-masashiono0611s-projects.vercel.app/`
-- このURLで機能テストを実施
+3. Vercel automatically creates a preview deployment
+   - Test your changes at the preview URL
 
-### 2. 本番環境へのデプロイ
-
-1. プレビュー環境での動作確認が完了したら、mainブランチへマージ
+4. Merge to main when ready
 ```bash
 git checkout main
 git pull
@@ -166,162 +123,38 @@ git merge feature/your-feature-name
 git push
 ```
 
-2. Vercelでの本番デプロイ
-- mainブランチへのプッシュ後、自動的に本番環境へのデプロイが開始
-- 本番URL: `https://task-board-telegram-01.vercel.app/`
-- デプロイ状況はVercelのダッシュボードで確認可能
+5. Vercel automatically deploys to production from the main branch
 
-### 3. デプロイの確認
+### Telegram Bot (Railway.app)
 
-1. 本番環境での動作確認
-- Telegramボットの動作確認
-- Webアプリの機能確認
-- デバッグ情報の確認
+The bot is deployed to Railway.app with the following environment variables:
 
-2. 問題が発見された場合
-- 新しいブランチを作成して修正
-- 上記のフローを再度実施
-
-注意: 本番環境（mainブランチ）の安定性を保つため、必ずプレビュー環境での十分なテストを行ってからマージしてください。
-
-## 技術スタック
-
-- **フロントエンド**: Next.js, React, TailwindCSS
-- **バックエンド**: Firebase Realtime Database
-- **ボット**: Node.js, Telegraf
-- **言語**: TypeScript
-
-## デバッグモード
-
-アプリケーションにはデバッグモードが組み込まれており、必要に応じて有効化できます。デバッグ機能は現在コメントアウトされていますが、以下のファイルで利用可能です：
-
-### Webアプリケーション（app/page.tsx）
-```typescript
-/* デバッグ関連の型定義とコード
-interface LogEntry {
-  timestamp: string;
-  message: string;
-  type: 'info' | 'error' | 'warn';
-}
-*/
 ```
-デバッグ情報の表示を有効にするには、該当するコードブロックのコメントアウトを解除します。
-
-### Firebase（app/lib/firebase.ts）
-```typescript
-/* デバッグ関連の関数とログ
-const logToDOM = (message: string, type: 'info' | 'error' | 'warn' = 'info') => {
-  // 実装詳細
-};
-*/
-```
-Firebaseの接続状態やデータ操作のログを表示するには、該当するコードブロックのコメントアウトを解除します。
-
-デバッグモードを有効にすると以下の情報が表示されます：
-- URLパラメータとその解析結果
-- グループIDのエンコード/デコード状態
-- Firebaseの接続状態
-- データベース操作のログ
-- エラーメッセージの詳細
-
-## Telegram Mini Apps SDK対応
-
-このアプリケーションは `@telegram-apps/sdk-react` パッケージを使用してTelegram Mini Apps環境と統合されています。
-
-### retrieveLaunchParamsの実装
-
-アプリケーションでは `retrieveLaunchParams` 関数を使用して、Telegramから渡されたパラメータを取得しています：
-
-```typescript
-// app/page.tsxの実装例
-import { retrieveLaunchParams } from '@telegram-apps/sdk-react';
-
-function useLaunchParams() {
-  // サーバーサイドでの実行時に問題が発生しないようにする
-  if (typeof window === 'undefined') {
-    return { startParam: null };
-  }
-
-  try {
-    // retrieveLaunchParamsの結果を直接返す
-    const params = retrieveLaunchParams();
-    return {
-      startParam: params.tgWebAppStartParam || null
-    };
-  } catch (error) {
-    // エラーをキャッチし、ローカル開発環境用のデフォルト値を返す
-    console.warn('Telegramパラメータの取得に失敗しました:', error);
-    
-    // URLパラメータから取得を試みる
-    try {
-      const urlParams = new URLSearchParams(window.location.search);
-      const startapp = urlParams.get('startapp');
-      if (startapp) {
-        return { startParam: startapp };
-      }
-    } catch (urlError) {
-      console.warn('URLパラメータの取得に失敗しました:', urlError);
-    }
-    
-    // デフォルト値を返す
-    return { startParam: null };
-  }
-}
+BOT_TOKEN=your_production_bot_token
+WEBAPP_URL=https://your-production-app-url.vercel.app
+NODE_ENV=production
 ```
 
-### セットアップ手順
+## Testing Locally
 
-Telegram Mini Appsとして正しく動作させるには、以下の手順を実施してください：
+To test the application with a specific group ID:
 
-1. **BotFatherでMini Appの登録**
-   ```
-   /newapp
-   ```
-   を実行し、画面の指示に従ってアプリを作成します。
+```
+http://localhost:3000?startapp=base64_encoded_group_id
+```
 
-2. **環境変数の設定**
-   Railway.appのダッシュボードで`WEBAPP_URL`環境変数を以下のように設定します：
-   ```
-   WEBAPP_URL=https://t.me/your_bot_username/app
-   ```
-   （例：`https://t.me/dev_test_masashi_bot/app`）
+Example for testing with group ID "test-group-1":
+```
+http://localhost:3000?startapp=dGVzdC1ncm91cC0x
+```
 
-3. **Botの再デプロイ**
-   環境変数を設定した後、Railway.appでボットを再デプロイします。
+## Contribution Guidelines
 
-4. **Vercelのデプロイ設定を確認**
-   - `@telegram-apps/sdk-react`パッケージがインストールされていることを確認
-   - ビルドエラーがないことを確認
+1. Create a feature branch
+2. Implement and test your changes
+3. Submit a pull request with a clear description
+4. Ensure all tests pass and code follows project style guidelines
 
-### 開発環境での注意点
+## License
 
-開発環境（localhost）ではTelegram Mini Apps SDKが正常に動作しないため、以下の対応をしています：
-
-1. **エラーハンドリング**
-   `retrieveLaunchParams`関数は開発環境でエラーをスローするため、try-catchで適切に処理しています。
-
-2. **パラメータのフォールバック機構**
-   - Telegram SDKから取得できない場合はURLパラメータから取得
-   - URLパラメータもない場合はデフォルト値を使用
-
-3. **テスト用グループIDの使用**
-   開発環境ではテスト用グループID（`test-group-1`）が自動的に使用されます。
-
-4. **デバッグボタンの利用**
-   アプリ上部の「デバッグ情報を表示」ボタンをクリックすると、現在のパラメータやアプリの状態を確認できます。
-
-### トラブルシューティング
-
-1. **「Unable to retrieve launch parameters」エラー**
-   - これは正常なエラーで、Telegram環境外でアプリを実行すると発生します
-   - 開発環境ではエラーハンドリングによって自動的に処理されます
-
-2. **パラメータが取得できない場合**
-   - Telegramボットの設定を確認（`/webapp`コマンドの実装）
-   - BotFatherでのMini App登録状況を確認
-   - 環境変数（`WEBAPP_URL`）が正しく設定されているか確認
-
-3. **デプロイ後にアプリが動作しない場合**
-   - Vercelのビルドログを確認
-   - Railway.appのログを確認
-   - Firebaseのセキュリティルールを確認
+This project is licensed under the MIT License - see the LICENSE file for details.
