@@ -14,14 +14,20 @@ import {
   AlertIcon,
   AlertTitle,
   AlertDescription,
-  useColorModeValue
+  useColorModeValue,
+  Container,
+  Collapse,
+  IconButton,
+  VStack,
+  Code,
+  Flex
 } from '@chakra-ui/react';
+import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 
 interface TaskListProps {
   groupId: string;
 }
 
-/* デバッグ関連のインターフェース - 必要に応じてコメントを外して使用可能
 interface QueryDebugInfo {
   collection: string;
   filters: Array<{
@@ -41,25 +47,24 @@ interface DebugQueryResult {
   resultCount: number;
   results: Task[];
 }
-*/
 
 export default function TaskList({ groupId }: TaskListProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showDebug, setShowDebug] = useState(false);
+  const [debugQueries, setDebugQueries] = useState<DebugQueryResult[]>([]);
   
   // ダークモード対応の色を設定
   const loadingTextColor = useColorModeValue('gray.600', 'gray.400');
   const emptyTextColor = useColorModeValue('gray.500', 'gray.400');
-
-  /* デバッグ関連のstate - 必要に応じてコメントを外して使用可能
-  const [debugQueries, setDebugQueries] = useState<DebugQueryResult[]>([]);
-  */
+  const debugBgColor = useColorModeValue('gray.50', 'gray.800');
+  const debugCodeBgColor = useColorModeValue('gray.100', 'gray.900');
 
   useEffect(() => {
     if (!db) {
       console.error('Firestore is not initialized or null');
-      setError('データベースの初期化に失敗しました');
+      setError('Database initialization failed');
       setLoading(false);
       return;
     }
@@ -75,7 +80,6 @@ export default function TaskList({ groupId }: TaskListProps) {
         orderBy('createdAt', 'desc')
       );
 
-      /* デバッグ情報 - 必要に応じてコメントを外して使用可能
       const queryDebugInfo = {
         collection: 'tasks',
         filters: [
@@ -85,7 +89,6 @@ export default function TaskList({ groupId }: TaskListProps) {
           { field: 'createdAt', direction: 'desc' }
         ]
       };
-      */
       
       const unsubscribe = onSnapshot(
         q,
@@ -99,20 +102,18 @@ export default function TaskList({ groupId }: TaskListProps) {
           });
           
           setTasks(taskList);
-          /* デバッグ情報の更新 - 必要に応じてコメントを外して使用可能
           setDebugQueries(prev => [...prev, {
             timestamp: new Date().toISOString(),
             query: queryDebugInfo,
             resultCount: taskList.length,
             results: taskList
           }]);
-          */
           setLoading(false);
           setError(null);
         },
         (err) => {
           console.error('Error fetching tasks:', err);
-          setError(`タスクの取得に失敗しました: ${err.message}`);
+          setError(`Failed to fetch tasks: ${err.message}`);
           setLoading(false);
         }
       );
@@ -122,47 +123,81 @@ export default function TaskList({ groupId }: TaskListProps) {
       };
     } catch (err) {
       console.error('Error setting up query:', err);
-      setError(`クエリの設定に失敗しました: ${err}`);
+      setError(`Failed to set up query: ${err}`);
       setLoading(false);
     }
   }, [groupId]);
 
-  if (loading) {
-    return (
-      <Box textAlign="center" py={8}>
-        <Spinner size="xl" color="blue.500" />
-        <Text mt={4} color={loadingTextColor}>読み込み中...</Text>
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert status="error" variant="subtle" borderRadius="md">
-        <AlertIcon />
-        <Box>
-          <AlertTitle>エラーが発生しました</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Box>
-      </Alert>
-    );
-  }
-
-  if (tasks.length === 0) {
-    return (
-      <Box textAlign="center" py={6}>
-        <Text color={emptyTextColor} fontSize="lg">タスクはありません</Text>
-      </Box>
-    );
-  }
-
   return (
-    <Box mt={4}>
-      <Stack spacing={4}>
-        {tasks.map((task) => (
-          <TaskItem key={task.id} task={task} />
-        ))}
-      </Stack>
+    <Box w="100%">
+      {loading ? (
+        <Box textAlign="center" py={8}>
+          <Spinner size="xl" color="brand.500" />
+          <Text mt={4} color={loadingTextColor}>Loading tasks...</Text>
+        </Box>
+      ) : error ? (
+        <Alert status="error" variant="subtle" borderRadius="md">
+          <AlertIcon />
+          <Box>
+            <AlertTitle>Error Occurred</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Box>
+        </Alert>
+      ) : tasks.length === 0 ? (
+        <Box textAlign="center" py={6}>
+          <Text color={emptyTextColor} fontSize="lg">No tasks available</Text>
+        </Box>
+      ) : (
+        <Stack spacing={4} w="100%">
+          {tasks.map((task) => (
+            <TaskItem key={task.id} task={task} />
+          ))}
+        </Stack>
+      )}
+
+      {/* デバッグ情報 */}
+      <Box mt={4}>
+        <Flex justify="center" mb={2}>
+          <IconButton
+            aria-label="Toggle debug info"
+            icon={showDebug ? <ChevronUpIcon /> : <ChevronDownIcon />}
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowDebug(!showDebug)}
+          />
+        </Flex>
+        <Collapse in={showDebug}>
+          <Box 
+            p={4} 
+            bg={debugBgColor} 
+            borderRadius="md" 
+            fontSize="sm"
+            w="100%"
+          >
+            <VStack align="start" spacing={2}>
+              <Text fontWeight="bold">Debug Information:</Text>
+              <Text>Group ID: <Code>{groupId}</Code></Text>
+              {debugQueries.length > 0 && (
+                <Box w="100%">
+                  <Text fontWeight="semibold">Recent Query:</Text>
+                  <Box 
+                    as="pre" 
+                    mt={1} 
+                    p={2} 
+                    bg={debugCodeBgColor}
+                    borderRadius="md"
+                    overflow="auto"
+                    maxH="200px"
+                    fontSize="xs"
+                  >
+                    {JSON.stringify(debugQueries[debugQueries.length - 1], null, 2)}
+                  </Box>
+                </Box>
+              )}
+            </VStack>
+          </Box>
+        </Collapse>
+      </Box>
     </Box>
   );
 } 

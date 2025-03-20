@@ -39,7 +39,7 @@ export default function TaskItem({ task }: TaskItemProps) {
       console.error('Failed to update task:', error);
       setIsCompleted(isCompleted); // 元に戻す
       toast({
-        title: "更新に失敗しました",
+        title: "Failed to update task",
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -52,7 +52,7 @@ export default function TaskItem({ task }: TaskItemProps) {
       setIsDeleting(true);
       await deleteDoc(doc(db, 'tasks', task.id));
       toast({
-        title: "タスクを削除しました",
+        title: "Task deleted",
         status: "success",
         duration: 2000,
         isClosable: true,
@@ -61,7 +61,7 @@ export default function TaskItem({ task }: TaskItemProps) {
       console.error('Failed to delete task:', error);
       setIsDeleting(false);
       toast({
-        title: "削除に失敗しました",
+        title: "Failed to delete task",
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -78,31 +78,33 @@ export default function TaskItem({ task }: TaskItemProps) {
       opacity={isDeleting ? 0.5 : 1}
       transition="opacity 0.2s"
       borderWidth="1px"
+      w="100%"
     >
-      <Flex justify="space-between" align="center">
-        <Flex align="center" gap={3}>
+      <Flex justify="space-between" align="center" w="100%">
+        <Flex align="center" gap={3} flex="1" minW="0">
           <Checkbox
             isChecked={isCompleted}
             onChange={toggleComplete}
-            colorScheme="blue"
             size="lg"
           />
           <Text
             fontSize="md"
             textDecoration={isCompleted ? 'line-through' : 'none'}
             color={isCompleted ? completedTextColor : textColor}
+            isTruncated
           >
             {task.title}
           </Text>
         </Flex>
         <IconButton
-          aria-label="タスクを削除"
+          aria-label="Delete task"
           icon={<DeleteIcon />}
           onClick={deleteTask}
           isDisabled={isDeleting}
           colorScheme="red"
           variant="ghost"
           size="sm"
+          ml={2}
         />
       </Flex>
     </Box>
