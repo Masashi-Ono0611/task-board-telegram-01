@@ -6,6 +6,14 @@ import TaskList from "./components/TaskList";
 import TaskForm from "./components/TaskForm";
 import dynamic from 'next/dynamic';
 
+// デバッグ情報の型定義
+interface DebugInfo {
+  fullUrl: string;
+  search: string;
+  startParam: string | null;
+  allParams: Record<string, string>;
+}
+
 // クライアントサイドのみのレンダリングのためのコンポーネント
 const TaskBoardClient = dynamic(() => Promise.resolve(TaskBoard), {
   ssr: false
@@ -15,7 +23,7 @@ function TaskBoard() {
   const [groupId, setGroupId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
 
   useEffect(() => {
     const initializeComponent = async () => {
@@ -28,12 +36,7 @@ function TaskBoard() {
         const startParam = urlParams.get('startapp');
         
         // デバッグ情報の収集
-        const debug: {
-          fullUrl: string;
-          search: string;
-          startParam: string | null;
-          allParams: Record<string, string>;
-        } = {
+        const debug: DebugInfo = {
           fullUrl: window.location.href,
           search: window.location.search,
           startParam: startParam,
