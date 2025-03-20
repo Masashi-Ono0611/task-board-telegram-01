@@ -10,11 +10,31 @@ interface TaskListProps {
   groupId: string;
 }
 
+interface QueryDebugInfo {
+  collection: string;
+  filters: Array<{
+    field: string;
+    operator: string;
+    value: string;
+  }>;
+  orderBy: Array<{
+    field: string;
+    direction: string;
+  }>;
+}
+
+interface DebugQueryResult {
+  timestamp: string;
+  query: QueryDebugInfo;
+  resultCount: number;
+  results: Task[];
+}
+
 export default function TaskList({ groupId }: TaskListProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [debugQueries, setDebugQueries] = useState<any[]>([]);
+  const [debugQueries, setDebugQueries] = useState<DebugQueryResult[]>([]);
 
   useEffect(() => {
     console.log('TaskList component mounted with groupId:', groupId);
