@@ -223,3 +223,105 @@ Firebaseの接続状態やデータ操作のログを表示するには、該当
 - Firebaseの接続状態
 - データベース操作のログ
 - エラーメッセージの詳細
+
+## Telegram Mini Apps SDK対応
+
+このアプリケーションは `@telegram-apps/sdk-react` パッケージを使用してTelegram Mini Apps環境と統合されています。
+
+### retrieveLaunchParamsの実装
+
+アプリケーションでは `retrieveLaunchParams` 関数を使用して、Telegramから渡されたパラメータを取得しています：
+
+```typescript
+// app/page.tsxの実装例
+import { retrieveLaunchParams } from '@telegram-apps/sdk-react';
+
+function useLaunchParams() {
+  // サーバーサイドでの実行時に問題が発生しないようにする
+  if (typeof window === 'undefined') {
+    return { startParam: null };
+  }
+
+  try {
+    // retrieveLaunchParamsの結果を直接返す
+    const params = retrieveLaunchParams();
+    return {
+      startParam: params.tgWebAppStartParam || null
+    };
+  } catch (error) {
+    // エラーをキャッチし、ローカル開発環境用のデフォルト値を返す
+    console.warn('Telegramパラメータの取得に失敗しました:', error);
+    
+    // URLパラメータから取得を試みる
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const startapp = urlParams.get('startapp');
+      if (startapp) {
+        return { startParam: startapp };
+      }
+    } catch (urlError) {
+      console.warn('URLパラメータの取得に失敗しました:', urlError);
+    }
+    
+    // デフォルト値を返す
+    return { startParam: null };
+  }
+}
+```
+
+### セットアップ手順
+
+Telegram Mini Appsとして正しく動作させるには、以下の手順を実施してください：
+
+1. **BotFatherでMini Appの登録**
+   ```
+   /newapp
+   ```
+   を実行し、画面の指示に従ってアプリを作成します。
+
+2. **環境変数の設定**
+   Railway.appのダッシュボードで`WEBAPP_URL`環境変数を以下のように設定します：
+   ```
+   WEBAPP_URL=https://t.me/your_bot_username/app
+   ```
+   （例：`https://t.me/dev_test_masashi_bot/app`）
+
+3. **Botの再デプロイ**
+   環境変数を設定した後、Railway.appでボットを再デプロイします。
+
+4. **Vercelのデプロイ設定を確認**
+   - `@telegram-apps/sdk-react`パッケージがインストールされていることを確認
+   - ビルドエラーがないことを確認
+
+### 開発環境での注意点
+
+開発環境（localhost）ではTelegram Mini Apps SDKが正常に動作しないため、以下の対応をしています：
+
+1. **エラーハンドリング**
+   `retrieveLaunchParams`関数は開発環境でエラーをスローするため、try-catchで適切に処理しています。
+
+2. **パラメータのフォールバック機構**
+   - Telegram SDKから取得できない場合はURLパラメータから取得
+   - URLパラメータもない場合はデフォルト値を使用
+
+3. **テスト用グループIDの使用**
+   開発環境ではテスト用グループID（`test-group-1`）が自動的に使用されます。
+
+4. **デバッグボタンの利用**
+   アプリ上部の「デバッグ情報を表示」ボタンをクリックすると、現在のパラメータやアプリの状態を確認できます。
+
+### トラブルシューティング
+
+1. **「Unable to retrieve launch parameters」エラー**
+   - これは正常なエラーで、Telegram環境外でアプリを実行すると発生します
+   - 開発環境ではエラーハンドリングによって自動的に処理されます
+
+2. **パラメータが取得できない場合**
+   - Telegramボットの設定を確認（`/webapp`コマンドの実装）
+   - BotFatherでのMini App登録状況を確認
+   - 環境変数（`WEBAPP_URL`）が正しく設定されているか確認
+
+3. **デプロイ後にアプリが動作しない場合**
+   - Vercelのビルドログを確認
+   - Railway.appのログを確認
+   - Firebaseのセキュリティルールを確認
