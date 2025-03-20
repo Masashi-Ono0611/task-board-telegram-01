@@ -2,6 +2,8 @@
 
 import { CacheProvider } from '@chakra-ui/next-js'
 import { ChakraProvider, ColorModeScript, extendTheme } from '@chakra-ui/react'
+import { useEffect } from 'react'
+import WebApp from '@twa-dev/sdk'
 
 const config = {
   initialColorMode: 'light',
@@ -28,7 +30,7 @@ const theme = extendTheme({
   styles: {
     global: (props: any) => ({
       body: {
-        bg: props.colorMode === 'dark' ? 'gray.900' : 'blue.50',
+        bg: props.colorMode === 'dark' ? '#1A202C' : '#EBF8FF',  // 直接的なHEX値を使用
       },
     }),
   },
@@ -51,12 +53,34 @@ const theme = extendTheme({
   },
 })
 
+function TelegramWebAppProvider({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    // Telegram WebAppの初期化
+    if (typeof window !== 'undefined') {
+      try {
+        WebApp.ready();
+        // 背景色をTelegramのテーマに合わせる（直接HEX値を使用）
+        const bgColor = theme.styles.global({ colorMode: 'light' }).body.bg;
+        WebApp.setBackgroundColor(bgColor);
+        // プラットフォームに合わせてヘッダーの色も設定
+        WebApp.setHeaderColor(bgColor);
+      } catch (error) {
+        console.warn('Telegram WebApp initialization error:', error);
+      }
+    }
+  }, []);
+
+  return <>{children}</>;
+}
+
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <CacheProvider>
       <ColorModeScript initialColorMode={theme.config.initialColorMode} />
       <ChakraProvider theme={theme} resetCSS={false}>
-        {children}
+        <TelegramWebAppProvider>
+          {children}
+        </TelegramWebAppProvider>
       </ChakraProvider>
     </CacheProvider>
   )
