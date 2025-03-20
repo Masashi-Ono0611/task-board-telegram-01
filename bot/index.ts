@@ -64,20 +64,37 @@ bot.command('webapp', async (ctx) => {
   }
 });
 
-// デバッグ用：開発環境でのみメッセージログを出力
-if (process.env.NODE_ENV !== 'production') {
-  bot.on('message', (ctx: Context) => {
-    if (ctx.chat) {
-      console.log('Received message in chat:', {
-        chatId: ctx.chat.id,
-        chatType: ctx.chat.type,
-        messageText: 'message' in ctx.update ? 
-          ('text' in ctx.update.message ? ctx.update.message.text : '[非テキストメッセージ]') 
-          : '[不明なメッセージ]'
-      });
+// デバッグ用：常にメッセージログを出力
+bot.on('message', (ctx: Context) => {
+  if (ctx.chat) {
+    console.log('Received message in chat:', {
+      chatId: ctx.chat.id,
+      chatType: ctx.chat.type,
+      messageText: 'message' in ctx.update ? 
+        ('text' in ctx.update.message ? ctx.update.message.text : '[非テキストメッセージ]') 
+        : '[不明なメッセージ]'
+    });
+    
+    // チャットにデバッグ情報を送信
+    if ('message' in ctx.update && 'text' in ctx.update.message && ctx.update.message.text.includes('/debug')) {
+      const chatInfo = `Chat ID: ${ctx.chat.id}\nChat Type: ${ctx.chat.type}`;
+      ctx.reply(`デバッグ情報:\n${chatInfo}`);
     }
-  });
-}
+  }
+});
+
+bot.command('debug', (ctx) => {
+  const chatId = ctx.chat.id;
+  const encodedGroupId = Buffer.from(chatId.toString()).toString('base64');
+  const webappUrl = `${process.env.WEBAPP_URL}?startapp=${encodedGroupId}&debug=true`;
+  
+  ctx.reply(`デバッグ情報:
+Chat ID: ${chatId}
+Encoded Group ID: ${encodedGroupId}
+WEBAPP_URL: ${process.env.WEBAPP_URL}
+Full WebApp URL: ${webappUrl}
+NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
+});
 
 bot.launch().then(() => {
   console.log(`Bot is running in ${process.env.NODE_ENV || 'development'} mode...`);

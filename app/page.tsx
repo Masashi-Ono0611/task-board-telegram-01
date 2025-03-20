@@ -58,8 +58,8 @@ function TaskBoard() {
           const startapp = params.get('startapp');
           const debug = params.get('debug');
           
-          // デバッグモードの設定
-          setShowDebug(debug === 'true' || process.env.NODE_ENV === 'development');
+          // デバッグモードを常に有効化
+          setShowDebug(true);
           
           console.log("startapp parameter:", startapp);
           
