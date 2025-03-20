@@ -11,7 +11,8 @@ import {
   IconButton,
   Checkbox,
   useToast,
-  useColorModeValue
+  useColorModeValue,
+  Tooltip
 } from '@chakra-ui/react';
 import { DeleteIcon } from '@chakra-ui/icons';
 
@@ -28,6 +29,7 @@ export default function TaskItem({ task }: TaskItemProps) {
   const bgColor = useColorModeValue('white', 'gray.700');
   const textColor = useColorModeValue('gray.800', 'white');
   const completedTextColor = useColorModeValue('gray.500', 'gray.400');
+  const creatorTextColor = useColorModeValue('gray.600', 'gray.400');
 
   const toggleComplete = async () => {
     try {
@@ -71,7 +73,7 @@ export default function TaskItem({ task }: TaskItemProps) {
 
   return (
     <Box 
-      p={4} 
+      p={3} 
       bg={bgColor}
       borderRadius="md" 
       boxShadow="sm"
@@ -81,20 +83,36 @@ export default function TaskItem({ task }: TaskItemProps) {
       w="100%"
     >
       <Flex justify="space-between" align="center" w="100%">
-        <Flex align="center" gap={3} flex="1" minW="0">
+        <Flex align="center" gap={2} flex="1" minW="0">
           <Checkbox
             isChecked={isCompleted}
             onChange={toggleComplete}
-            size="lg"
+            size="md"
           />
-          <Text
-            fontSize="md"
-            textDecoration={isCompleted ? 'line-through' : 'none'}
-            color={isCompleted ? completedTextColor : textColor}
-            isTruncated
-          >
-            {task.title}
-          </Text>
+          <Flex direction="column" flex="1" minW="0" gap={0}>
+            <Text
+              fontSize="md"
+              textDecoration={isCompleted ? 'line-through' : 'none'}
+              color={isCompleted ? completedTextColor : textColor}
+              isTruncated
+              lineHeight="1.2"
+              mb={0.5}
+            >
+              {task.title}
+            </Text>
+            {task.createdBy && (
+              <Tooltip label={`User ID: ${task.createdBy.id}`}>
+                <Text
+                  fontSize="xs"
+                  color={creatorTextColor}
+                  isTruncated
+                  lineHeight="1.2"
+                >
+                  Created by: {task.createdBy.username}
+                </Text>
+              </Tooltip>
+            )}
+          </Flex>
         </Flex>
         <IconButton
           aria-label="Delete task"
