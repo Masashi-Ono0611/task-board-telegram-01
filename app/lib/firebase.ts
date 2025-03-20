@@ -1,7 +1,23 @@
 'use client';
 
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, Firestore } from 'firebase/firestore';
+import { initializeApp, getApps } from 'firebase/app';
+import { 
+  getFirestore, 
+  collection, 
+  addDoc, 
+  Firestore,
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+  serverTimestamp,
+  DocumentReference,
+  Timestamp,
+  FieldValue,
+  writeBatch,
+  deleteField
+} from 'firebase/firestore';
+import { TelegramUser } from '../types/telegram';
 
 /* デバッグ関連の定数と関数 - 必要に応じてコメントを外して使用可能
 const FB_VERSION = '1.0.1';
@@ -46,28 +62,22 @@ const maskValue = (value: string | undefined): string => {
 };
 */
 
-const FB_VERSION = '1.0.2';
+const FB_VERSION = '1.0.3';
 
-// デバッグメッセージを保存する配列
-let debugMessages: string[] = [];
+// デバッグメッセージを格納する配列
+export const debugMessages: string[] = [];
 
 // デバッグメッセージを追加する関数
-export const addDebugMessage = (message: string, type: 'info' | 'error' | 'warn' = 'info') => {
-  const time = new Date().toISOString().split('T')[1].split('.')[0];
-  const formattedMessage = `[${time}] [Firebase v${FB_VERSION}] ${message}`;
+export function addDebugMessage(message: string) {
+  const formattedMessage = `${new Date().toISOString()} - ${message}`;
   debugMessages.push(formattedMessage);
-  console.log(`${type.toUpperCase()}: ${formattedMessage}`);
-};
-
-// デバッグメッセージを取得する関数
-export const getDebugMessages = () => {
-  return debugMessages;
-};
-
-// デバッグメッセージをクリアする関数
-export const clearDebugMessages = () => {
-  debugMessages = [];
-};
+  // 最新の100メッセージのみを保持
+  if (debugMessages.length > 100) {
+    debugMessages.shift();
+  }
+  // コンソールにも出力
+  console.log(formattedMessage);
+}
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -88,33 +98,103 @@ try {
   addDebugMessage('Firestoreを初期化中...');
   db = getFirestore(app);
   addDebugMessage('Firestoreの初期化成功');
-} catch (error) {
-  addDebugMessage('Firebaseの初期化エラー:' + error, 'error');
+} catch (error: any) {
+  addDebugMessage(`Firebaseの初期化エラー: ${error?.message || 'Unknown error'}`);
   throw error;
 }
 
+// ユーザー関連の型定義
+interface FirestoreUser extends Omit<TelegramUser, 'id'> {
+  telegramId: number;
+  lastSeen: FieldValue | Timestamp;
+  createdAt: FieldValue | Timestamp;
+  updatedAt: FieldValue | Timestamp;
+  groups: string[];
+}
+
+// ユーザー管理関連の関数
+export async function saveUserToFirestore(user: TelegramUser): Promise<void> {
+  if (!db) {
+    addDebugMessage('❌ Failed to save user: Firestore not initialized');
+    throw new Error('Firestore not initialized');
+  }
+
+  try {
+    const userRef = doc(db, 'users', user.id.toString());
+    const userDoc = await getDoc(userRef);
+    
+    // 新しいフィールド名のみを使用
+    const userData = {
+      telegramId: user.id,
+      firstName: user.first_name,
+      lastName: user.last_name || undefined,
+      username: user.username || undefined,
+      languageCode: user.language_code || undefined,
+      isPremium: user.is_premium || false,
+      lastSeen: serverTimestamp(),
+      groups: [],
+      ...(userDoc.exists() ? {} : {
+        createdAt: serverTimestamp(),
+      }),
+      updatedAt: serverTimestamp(),
+    };
+
+    if (userDoc.exists()) {
+      // 既存のドキュメントを更新する前に、古いフィールドを削除
+      const oldFields = [
+        'first_name',
+        'last_name',
+        'language_code',
+        'is_premium'
+      ];
+      
+      const batch = writeBatch(db);
+      batch.update(userRef, userData);
+      // 古いフィールドを削除
+      oldFields.forEach(field => {
+        batch.update(userRef, { [field]: deleteField() });
+      });
+      
+      await batch.commit();
+      addDebugMessage(`✅ Updated user ${user.id} in Firestore`);
+    } else {
+      await setDoc(userRef, userData);
+      addDebugMessage(`✅ Created new user ${user.id} in Firestore`);
+    }
+    addDebugMessage('User data successfully saved to Firestore');
+  } catch (error: any) {
+    addDebugMessage(`❌ Error saving user ${user.id}: ${error?.message || 'Unknown error'}`);
+    throw error;
+  }
+}
+
+// タスク関連の型定義と関数
 interface NewTask {
   title: string;
   completed: boolean;
   groupId: string;
   createdAt: string;
+  userId?: string;  // タスクの作成者ID
 }
 
 export const addTask = async (task: NewTask) => {
-  addDebugMessage('タスク追加リクエスト:' + JSON.stringify({ ...task, title: task.title.substring(0, 10) + '...' }));
+  addDebugMessage(`タスク追加リクエスト: ${task.title.substring(0, 10)}...`);
   
   if (!db) {
-    const error = 'Firestoreが初期化されていません';
-    addDebugMessage(error, 'error');
-    throw new Error(error);
+    const errorMsg = 'Firestoreが初期化されていません';
+    addDebugMessage(`❌ ${errorMsg}`);
+    throw new Error(errorMsg);
   }
   
   try {
-    const result = await addDoc(collection(db, 'tasks'), task);
-    addDebugMessage('タスク追加成功: ' + result.id);
+    const result = await addDoc(collection(db, 'tasks'), {
+      ...task,
+      createdAt: serverTimestamp()
+    });
+    addDebugMessage(`✅ タスク追加成功: ${result.id}`);
     return result;
-  } catch (error) {
-    addDebugMessage('タスク追加エラー:' + error, 'error');
+  } catch (error: any) {
+    addDebugMessage(`❌ タスク追加エラー: ${error?.message || 'Unknown error'}`);
     throw error;
   }
 };

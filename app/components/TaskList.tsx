@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { onSnapshot, collection, query, where, orderBy } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db, debugMessages } from '../lib/firebase';
 import { Task } from '../types/task';
 import TaskItem from './TaskItem';
 import { useTelegramUser } from '../hooks/useTelegramUser';
@@ -181,6 +181,26 @@ export default function TaskList({ groupId }: TaskListProps) {
               <Text fontWeight="bold">Debug Information:</Text>
               <Text>Group ID: <Code>{groupId}</Code></Text>
               
+              {/* Firestore関連のデバッグ情報 */}
+              <Box w="100%">
+                <Text fontWeight="semibold">Firestore Debug Messages:</Text>
+                <Box 
+                  mt={1} 
+                  p={2} 
+                  bg={debugCodeBgColor}
+                  borderRadius="md"
+                  fontSize="xs"
+                  maxH="200px"
+                  overflow="auto"
+                >
+                  <VStack align="start" spacing={1}>
+                    {debugMessages.map((message, index) => (
+                      <Text key={index}>{message}</Text>
+                    ))}
+                  </VStack>
+                </Box>
+              </Box>
+
               {/* Telegram関連のデバッグ情報 */}
               <Box w="100%">
                 <Text fontWeight="semibold">Telegram Info:</Text>

@@ -7,7 +7,7 @@ import { addDebugMessage } from './firebase';
  */
 export const validateTelegramUser = (user: TelegramUser): boolean => {
   if (!user.id || !user.first_name) {
-    addDebugMessage('Invalid Telegram user data', 'error');
+    addDebugMessage(`❌ Invalid Telegram user data`);
     return false;
   }
   return true;
@@ -18,7 +18,7 @@ export const validateTelegramUser = (user: TelegramUser): boolean => {
  */
 export const signInWithTelegram = async (user: TelegramUser) => {
   try {
-    addDebugMessage('Attempting to sign in with Telegram user: ' + user.id);
+    addDebugMessage(`Attempting to sign in with Telegram user: ${user.id}`);
     
     // ユーザー情報の検証
     if (!validateTelegramUser(user)) {
@@ -40,8 +40,8 @@ export const signInWithTelegram = async (user: TelegramUser) => {
       throw new Error('Custom token authentication not implemented for production');
     }
 
-  } catch (error) {
-    addDebugMessage('Error signing in with Telegram: ' + error, 'error');
+  } catch (error: any) {
+    addDebugMessage(`❌ Error signing in with Telegram: ${error?.message || 'Unknown error'}`);
     throw error;
   }
 };
@@ -55,9 +55,9 @@ export const signOut = async () => {
       const auth = getAuth();
       await auth.signOut();
     }
-    addDebugMessage('Successfully signed out', 'info');
-  } catch (error) {
-    addDebugMessage('Error signing out: ' + error, 'error');
+    addDebugMessage('✅ Successfully signed out');
+  } catch (error: any) {
+    addDebugMessage(`❌ Error signing out: ${error?.message || 'Unknown error'}`);
     throw error;
   }
 };
