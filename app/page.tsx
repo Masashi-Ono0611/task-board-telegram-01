@@ -29,10 +29,6 @@ function TaskBoard() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const mountedRef = useRef(false);
 
-  // デバッグモードを確認
-  const isDebugMode = typeof window !== 'undefined' && 
-    (window.location.search.includes('debug=true') || process.env.NODE_ENV === 'development');
-
   // ログ関数をオーバーライドして、ステートに保存する
   useEffect(() => {
     if (typeof window !== 'undefined' && !mountedRef.current) {
