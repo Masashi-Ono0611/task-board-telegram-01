@@ -24,7 +24,6 @@ function TaskBoard() {
   const [groupId, setGroupId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [urlParams, setUrlParams] = useState<{[key: string]: string | null}>({});
 
   useEffect(() => {
     const initializeComponent = async () => {
@@ -33,15 +32,6 @@ function TaskBoard() {
         
         if (typeof window !== 'undefined') {
           const params = new URLSearchParams(window.location.search);
-          const paramsObj: {[key: string]: string | null} = {};
-          
-          params.forEach((value, key) => {
-            paramsObj[key] = value;
-          });
-          
-          setUrlParams(paramsObj);
-          console.log("URL parameters:", paramsObj);
-          
           const startapp = params.get('startapp');
           console.log("startapp parameter:", startapp);
           

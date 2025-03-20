@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { addTask } from '../lib/firebase';
 
 interface TaskFormProps {
@@ -53,7 +53,7 @@ export default function TaskForm({ groupId }: TaskFormProps) {
         createdAt: new Date().toISOString()
       };
       
-      const result = await addTask(newTask);
+      await addTask(newTask);
       
       /* デバッグ情報の更新 - 必要に応じてコメントを外して使用可能
       setDebug(prev => ({
