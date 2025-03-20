@@ -10,6 +10,7 @@ interface TaskListProps {
   groupId: string;
 }
 
+/* デバッグ関連のインターフェース - 必要に応じてコメントを外して使用可能
 interface QueryDebugInfo {
   collection: string;
   filters: Array<{
@@ -29,15 +30,17 @@ interface DebugQueryResult {
   resultCount: number;
   results: Task[];
 }
+*/
 
 export default function TaskList({ groupId }: TaskListProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  /* デバッグ関連のstate - 必要に応じてコメントを外して使用可能
   const [debugQueries, setDebugQueries] = useState<DebugQueryResult[]>([]);
+  */
 
   useEffect(() => {
-    console.log('TaskList component mounted with groupId:', groupId);
     if (!db) {
       console.error('Firestore is not initialized or null');
       setError('データベースの初期化に失敗しました');
@@ -45,29 +48,18 @@ export default function TaskList({ groupId }: TaskListProps) {
       return;
     }
 
-    console.log('Fetching tasks for groupId:', groupId);
     setLoading(true);
     
     try {
-      // Firestoreのクエリを構築する前にコレクションが存在するか確認
-      console.log('Checking if tasks collection exists in Firestore');
-      // コレクションの参照
       const tasksCollection = collection(db, 'tasks');
-      console.log('Tasks collection reference created');
       
-      // Firestoreクエリを構築する前のデバッグ
-      console.log('Building Firestore query with where condition: groupId ==', groupId);
-      console.log('Firestore instance:', db ? 'exists' : 'null');
-      
-      // Firestoreのクエリを構築
       const q = query(
         tasksCollection,
         where('groupId', '==', groupId),
         orderBy('createdAt', 'desc')
       );
-      console.log('Query built successfully');
 
-      // クエリのデバッグ情報
+      /* デバッグ情報 - 必要に応じてコメントを外して使用可能
       const queryDebugInfo = {
         collection: 'tasks',
         filters: [
@@ -77,66 +69,43 @@ export default function TaskList({ groupId }: TaskListProps) {
           { field: 'createdAt', direction: 'desc' }
         ]
       };
+      */
       
-      console.log('Query Debug Info:', queryDebugInfo);
-      
-      // クエリの実行
-      console.log('Executing Firestore query...');
       const unsubscribe = onSnapshot(
         q,
         (snapshot) => {
-          console.log('Snapshot received with', snapshot.size, 'documents');
-          if (snapshot.empty) {
-            console.log('Query returned no documents for groupId:', groupId);
-          }
-          
           const taskList = snapshot.docs.map((doc) => {
             const data = doc.data();
-            console.log('Document data:', { id: doc.id, ...data });
             return {
               id: doc.id,
               ...data
             } as Task;
           });
           
-          console.log('Final taskList:', taskList);
           setTasks(taskList);
+          /* デバッグ情報の更新 - 必要に応じてコメントを外して使用可能
           setDebugQueries(prev => [...prev, {
             timestamp: new Date().toISOString(),
             query: queryDebugInfo,
             resultCount: taskList.length,
             results: taskList
           }]);
+          */
           setLoading(false);
           setError(null);
         },
         (err) => {
           console.error('Error fetching tasks:', err);
-          // エラーの詳細情報
-          console.error('Error details:', {
-            code: err.code,
-            message: err.message,
-            stack: err.stack
-          });
           setError(`タスクの取得に失敗しました: ${err.message}`);
           setLoading(false);
         }
       );
 
       return () => {
-        console.log('Unsubscribing from Firestore query');
         unsubscribe();
       };
     } catch (err) {
       console.error('Error setting up query:', err);
-      // エラーオブジェクトの詳細を出力
-      if (err instanceof Error) {
-        console.error('Error details:', {
-          name: err.name,
-          message: err.message,
-          stack: err.stack
-        });
-      }
       setError(`クエリの設定に失敗しました: ${err}`);
       setLoading(false);
     }
@@ -152,12 +121,6 @@ export default function TaskList({ groupId }: TaskListProps) {
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
           {error}
         </div>
-        {debugQueries.length > 0 && (
-          <div className="mt-4 p-4 bg-gray-100 rounded">
-            <h3 className="font-bold mb-2">クエリデバッグ情報:</h3>
-            <pre className="text-xs overflow-auto">{JSON.stringify(debugQueries, null, 2)}</pre>
-          </div>
-        )}
       </div>
     );
   }
@@ -166,18 +129,6 @@ export default function TaskList({ groupId }: TaskListProps) {
     return (
       <div>
         <div className="text-center text-gray-500">タスクはありません</div>
-        <div className="mt-4 p-4 bg-gray-100 rounded">
-          <h3 className="font-bold mb-2">デバッグ情報:</h3>
-          <div className="mb-2">
-            <strong>現在のグループID:</strong> {groupId}
-          </div>
-          {debugQueries.length > 0 && (
-            <div>
-              <h4 className="font-semibold">最新のクエリ:</h4>
-              <pre className="text-xs overflow-auto">{JSON.stringify(debugQueries[debugQueries.length - 1], null, 2)}</pre>
-            </div>
-          )}
-        </div>
       </div>
     );
   }
@@ -188,21 +139,6 @@ export default function TaskList({ groupId }: TaskListProps) {
         {tasks.map((task) => (
           <TaskItem key={task.id} task={task} />
         ))}
-      </div>
-      <div className="mt-4 p-4 bg-gray-100 rounded">
-        <h3 className="font-bold mb-2">デバッグ情報:</h3>
-        <div className="mb-2">
-          <strong>現在のグループID:</strong> {groupId}
-        </div>
-        <div className="mb-2">
-          <strong>取得タスク数:</strong> {tasks.length}
-        </div>
-        {debugQueries.length > 0 && (
-          <div>
-            <h4 className="font-semibold">最新のクエリ:</h4>
-            <pre className="text-xs overflow-auto max-h-40">{JSON.stringify(debugQueries[debugQueries.length - 1], null, 2)}</pre>
-          </div>
-        )}
       </div>
     </div>
   );
