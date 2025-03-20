@@ -21,18 +21,38 @@ const APP_VERSION = '1.0.1';
 const APP_VERSION = '1.0.3';
 
 // カスタムフックの作成（最新バージョンの対応）
-const useLaunchParams = () => {
-  // 安全なフォールバック値を設定
+function useLaunchParams() {
+  // サーバーサイドでの実行時に問題が発生しないようにする
   if (typeof window === 'undefined') {
     return { startParam: null };
   }
-  
-  // retrieveLaunchParamsの結果を直接返す
-  const params = retrieveLaunchParams();
-  return {
-    startParam: params.tgWebAppStartParam || null
-  };
-};
+
+  try {
+    // retrieveLaunchParamsの結果を直接返す
+    const params = retrieveLaunchParams();
+    return {
+      startParam: params.tgWebAppStartParam || null
+    };
+  } catch (error) {
+    // エラーをキャッチし、ローカル開発環境用のデフォルト値を返す
+    console.warn('Telegramパラメータの取得に失敗しました:', error);
+    console.info('ローカル環境では、URLパラメータまたはデフォルト値を使用します');
+    
+    // URLパラメータから取得を試みる
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const startapp = urlParams.get('startapp');
+      if (startapp) {
+        return { startParam: startapp };
+      }
+    } catch (urlError) {
+      console.warn('URLパラメータの取得に失敗しました:', urlError);
+    }
+    
+    // デフォルト値を返す
+    return { startParam: null };
+  }
+}
 
 const TaskBoardClient = dynamic(() => Promise.resolve(TaskBoard), {
   ssr: false
@@ -164,18 +184,26 @@ function TaskBoard() {
         <TaskList groupId={groupId} />
         
         {/* デバッグ情報 */}
-        {showDebug && (
-          <div className="mt-8 p-4 bg-gray-100 rounded-lg">
-            <h2 className="text-lg font-bold mb-2">デバッグ情報 (v{APP_VERSION})</h2>
-            <div className="space-y-2">
-              {debugMessages.map((message, index) => (
-                <div key={index} className="font-mono text-sm">
-                  {message}
-                </div>
-              ))}
+        <div className="mt-8">
+          <button
+            onClick={() => setShowDebug(!showDebug)}
+            className="mb-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded"
+          >
+            {showDebug ? 'デバッグ情報を隠す' : 'デバッグ情報を表示'}
+          </button>
+          {showDebug && (
+            <div className="p-4 bg-gray-100 rounded-lg">
+              <h2 className="text-lg font-bold mb-2">デバッグ情報 (v{APP_VERSION})</h2>
+              <div className="space-y-2">
+                {debugMessages.map((message, index) => (
+                  <div key={index} className="font-mono text-sm">
+                    {message}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </main>
 
       <footer className="flex justify-center text-sm text-gray-500">
