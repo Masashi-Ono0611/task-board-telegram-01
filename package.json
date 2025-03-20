@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "start": "ts-node bot/index.ts",
+    "start": "node --loader ts-node/esm bot/index.ts",
     "lint": "next lint",
-    "bot:dev": "NODE_ENV=development ts-node --esm bot/index.ts",
-    "bot:start": "NODE_ENV=production ts-node --esm bot/index.ts"
+    "bot:dev": "NODE_ENV=development node --loader ts-node/esm bot/index.ts",
+    "bot:start": "NODE_ENV=production node --loader ts-node/esm bot/index.ts"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.0",

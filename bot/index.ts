@@ -1,6 +1,6 @@
 import { Telegraf } from 'telegraf';
 import type { Context } from 'telegraf';
-import dotenv from 'dotenv';
+import * as dotenv from 'dotenv';
 
 // 環境変数の読み込み
 if (process.env.NODE_ENV !== 'production') {
