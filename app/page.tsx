@@ -15,6 +15,7 @@ function TaskBoard() {
   const [groupId, setGroupId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
 
   useEffect(() => {
     const initializeComponent = async () => {
@@ -25,6 +26,27 @@ function TaskBoard() {
         // URLからstartappパラメータを取得
         const urlParams = new URLSearchParams(window.location.search);
         const startParam = urlParams.get('startapp');
+        
+        // デバッグ情報の収集
+        const debug: {
+          fullUrl: string;
+          search: string;
+          startParam: string | null;
+          allParams: Record<string, string>;
+        } = {
+          fullUrl: window.location.href,
+          search: window.location.search,
+          startParam: startParam,
+          allParams: {}
+        };
+        
+        // すべてのURLパラメータを収集
+        urlParams.forEach((value, key) => {
+          debug.allParams[key] = value;
+        });
+        
+        setDebugInfo(debug);
+        console.log('Debug Info:', debug);
 
         if (startParam) {
           try {
@@ -55,11 +77,29 @@ function TaskBoard() {
   }
 
   if (error) {
-    return <div className="p-8 text-red-500">{error}</div>;
+    return (
+      <div className="p-8">
+        <div className="text-red-500 mb-4">{error}</div>
+        {debugInfo && (
+          <div className="bg-gray-100 p-4 rounded text-xs overflow-auto">
+            <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
+          </div>
+        )}
+      </div>
+    );
   }
 
   if (!groupId) {
-    return <div className="p-8">有効なグループIDを提供してください</div>;
+    return (
+      <div className="p-8">
+        <div className="mb-4">有効なグループIDを提供してください</div>
+        {debugInfo && (
+          <div className="bg-gray-100 p-4 rounded text-xs overflow-auto">
+            <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
+          </div>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -77,6 +117,12 @@ function TaskBoard() {
       </header>
 
       <main className="flex flex-col gap-8">
+        {debugInfo && (
+          <div className="bg-gray-100 p-4 rounded text-xs overflow-auto mb-4">
+            <h3 className="font-bold mb-2">デバッグ情報:</h3>
+            <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
+          </div>
+        )}
         <TaskForm groupId={groupId} />
         <TaskList groupId={groupId} />
       </main>

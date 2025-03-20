@@ -38,31 +38,51 @@ bot.command('help', (ctx) => {
 });
 
 bot.command('webapp', (ctx) => {
-  const chatId = ctx.chat.id;
-  const encodedGroupId = Buffer.from(chatId.toString()).toString('base64');
-  
-  // URLの生成（本番環境では設定されたWebアプリURLを使用）
-  const webappUrl = `${WEBAPP_URL}?startapp=${encodedGroupId}`;
-  
-  console.log('Chat Info:', {
-    chatId: chatId,
-    chatType: ctx.chat.type,
-    encodedGroupId: encodedGroupId,
-    decodedGroupId: Buffer.from(encodedGroupId, 'base64').toString(),
-    webappUrl: webappUrl
-  });
-  
-  ctx.reply('タスクボードを開く', {
-    reply_markup: {
-      inline_keyboard: [[
-        { text: "Open App", url: webappUrl }
-      ]]
+  try {
+    const chatId = ctx.chat.id;
+    
+    // Base64エンコード処理の詳細なデバッグ
+    console.log('Original Chat ID (before encoding):', chatId);
+    console.log('Chat ID as string:', chatId.toString());
+    
+    const buffer = Buffer.from(chatId.toString());
+    console.log('Buffer created:', buffer);
+    
+    const encodedGroupId = buffer.toString('base64');
+    console.log('Encoded Group ID:', encodedGroupId);
+    
+    // デコード確認
+    const decodedBuffer = Buffer.from(encodedGroupId, 'base64');
+    const decodedGroupId = decodedBuffer.toString();
+    console.log('Decoded Group ID (verification):', decodedGroupId);
+    
+    // URLの生成（本番環境では設定されたWebアプリURLを使用）
+    const webappUrl = `${WEBAPP_URL}?startapp=${encodedGroupId}`;
+    
+    console.log('Full Webapp URL:', webappUrl);
+    console.log('Chat Info:', {
+      chatId: chatId,
+      chatType: ctx.chat.type,
+      encodedGroupId: encodedGroupId,
+      decodedGroupId: decodedGroupId,
+      webappUrl: webappUrl
+    });
+    
+    ctx.reply('タスクボードを開く', {
+      reply_markup: {
+        inline_keyboard: [[
+          { text: "Open App", url: webappUrl }
+        ]]
+      }
+    });
+    
+    // 開発環境の場合は、デコードされたグループIDも表示
+    if (process.env.NODE_ENV !== 'production') {
+      ctx.reply(`テスト用情報:\nグループID: ${chatId}\nエンコードされたID: ${encodedGroupId}\n\nデコード確認: ${decodedGroupId}\n\nWebアプリURL: ${webappUrl}`);
     }
-  });
-  
-  // 開発環境の場合は、デコードされたグループIDも表示
-  if (process.env.NODE_ENV !== 'production') {
-    ctx.reply(`テスト用情報:\nグループID: ${chatId}\nエンコードされたID: ${encodedGroupId}\n\nこのIDをテスト用に使用できます。`);
+  } catch (error) {
+    console.error('Error in webapp command:', error);
+    ctx.reply('タスクボードの起動中にエラーが発生しました。');
   }
 });
 
