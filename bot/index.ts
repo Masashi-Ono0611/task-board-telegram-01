@@ -47,6 +47,12 @@ bot.command('webapp', async (ctx) => {
     console.log('Encoded Group ID:', encodedGroupId);
     console.log('WEBAPP_URL:', process.env.WEBAPP_URL);
     
+    // チャットにデバッグ情報も表示
+    ctx.reply(`デバッグ情報:
+Chat ID: ${chatId}
+Encoded Group ID: ${encodedGroupId}
+WEBAPP_URL: ${process.env.WEBAPP_URL}`);
+    
     // デバッグパラメータを追加
     const webappUrl = `${process.env.WEBAPP_URL}?startapp=${encodedGroupId}&debug=true`;
     console.log('Full WebApp URL:', webappUrl);
