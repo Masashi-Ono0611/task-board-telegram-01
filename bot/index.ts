@@ -54,7 +54,7 @@ Encoded Group ID: ${encodedGroupId}
 WEBAPP_URL: ${process.env.WEBAPP_URL}`);
     
     // デバッグパラメータを追加
-    const webappUrl = `${process.env.WEBAPP_URL}?startapp=${encodedGroupId}&debug=true`;
+    const webappUrl = `${process.env.WEBAPP_URL}?startapp=${encodedGroupId}`;
     console.log('Full WebApp URL:', webappUrl);
 
     ctx.reply('タスクボードを開く', {

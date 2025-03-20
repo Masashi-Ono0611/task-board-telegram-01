@@ -4,8 +4,9 @@ import { Suspense, useEffect, useState } from 'react';
 import Image from "next/image";
 import TaskList from "./components/TaskList";
 import TaskForm from "./components/TaskForm";
+import { retrieveLaunchParams } from "@telegram-apps/sdk-react";
 import dynamic from 'next/dynamic';
-import { getDebugMessages, clearDebugMessages } from './lib/firebase';
+import { getDebugMessages, clearDebugMessages, addDebugMessage } from './lib/firebase';
 
 /* デバッグ関連の型定義とコード - 必要に応じてコメントを外して使用可能
 interface LogEntry {
@@ -17,7 +18,21 @@ interface LogEntry {
 const APP_VERSION = '1.0.1';
 */
 
-const APP_VERSION = '1.0.2';
+const APP_VERSION = '1.0.3';
+
+// カスタムフックの作成（最新バージョンの対応）
+const useLaunchParams = () => {
+  // 安全なフォールバック値を設定
+  if (typeof window === 'undefined') {
+    return { startParam: null };
+  }
+  
+  // retrieveLaunchParamsの結果を直接返す
+  const params = retrieveLaunchParams();
+  return {
+    startParam: params.tgWebAppStartParam || null
+  };
+};
 
 const TaskBoardClient = dynamic(() => Promise.resolve(TaskBoard), {
   ssr: false
@@ -28,7 +43,10 @@ function TaskBoard() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [debugMessages, setDebugMessages] = useState<string[]>([]);
-  const [showDebug, setShowDebug] = useState(false);
+  const [showDebug, setShowDebug] = useState(true);
+  
+  // Telegram MiniApp SDKからパラメータを取得
+  const { startParam } = useLaunchParams();
 
   // デバッグメッセージを定期的に更新
   useEffect(() => {
@@ -51,48 +69,61 @@ function TaskBoard() {
   useEffect(() => {
     const initializeComponent = async () => {
       try {
-        console.log('initializeComponent started');
-        
-        if (typeof window !== 'undefined') {
-          const params = new URLSearchParams(window.location.search);
-          const startapp = params.get('startapp');
-          const debug = params.get('debug');
+        // Telegram MiniApp SDKのパラメータを使用
+        if (startParam) {
+          addDebugMessage(`Telegram SDK startParam: ${startParam}`);
           
-          // デバッグモードを常に有効化
-          setShowDebug(true);
-          
-          console.log("startapp parameter:", startapp);
-          
-          if (startapp) {
-            try {
-              console.log("Attempting to decode:", startapp);
-              const decodedGroupId = atob(startapp);
-              console.log("Decoded Group ID:", decodedGroupId);
-              setGroupId(decodedGroupId);
-            } catch (error) {
-              console.error("Error decoding group ID:", error);
-              setError("Invalid group ID format");
-              
-              if (process.env.NODE_ENV === 'development') {
-                console.log("Using test group ID for development");
-                setGroupId('test-group-1');
-              }
-            }
-          } else {
-            console.log("No startapp parameter available");
+          try {
+            const decodedGroupId = atob(startParam);
+            addDebugMessage(`Decoded Group ID: ${decodedGroupId}`);
+            setGroupId(decodedGroupId);
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            addDebugMessage(`Error decoding group ID: ${errorMessage}`, 'error');
+            setError("Invalid group ID format");
             
+            // 開発環境ではテスト用のグループIDを使用
             if (process.env.NODE_ENV === 'development') {
-              console.log("Using test group ID for development");
               setGroupId('test-group-1');
-            } else {
-              setError("No group ID provided");
             }
           }
         } else {
-          console.log("Window is not defined (SSR context)");
+          // URLパラメータからのフォールバック（従来の方法）
+          if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            const startapp = params.get('startapp');
+            
+            // デバッグ情報
+            addDebugMessage(`No Telegram startParam, using URL: ${startapp || 'none'}`);
+            
+            if (startapp) {
+              try {
+                const decodedGroupId = atob(startapp);
+                addDebugMessage(`Decoded URL Group ID: ${decodedGroupId}`);
+                setGroupId(decodedGroupId);
+              } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                addDebugMessage(`Error decoding URL group ID: ${errorMessage}`, 'error');
+                setError("Invalid group ID format");
+                
+                if (process.env.NODE_ENV === 'development') {
+                  setGroupId('test-group-1');
+                }
+              }
+            } else {
+              if (process.env.NODE_ENV === 'development') {
+                addDebugMessage('Using test group ID for development');
+                setGroupId('test-group-1');
+              } else {
+                addDebugMessage('No group ID provided', 'error');
+                setError("No group ID provided");
+              }
+            }
+          }
         }
       } catch (error) {
-        console.error("Error in initializeComponent:", error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        addDebugMessage(`Error in initializeComponent: ${errorMessage}`, 'error');
         setError("An error occurred while initializing the component");
       } finally {
         setIsLoading(false);
@@ -100,30 +131,18 @@ function TaskBoard() {
     };
 
     initializeComponent();
-  }, []);
+  }, [startParam]);
 
   if (isLoading) {
-    return (
-      <div className="p-8">
-        <div>Loading...</div>
-      </div>
-    );
+    return <div className="p-8">Loading...</div>;
   }
 
   if (error && !groupId) {
-    return (
-      <div className="p-8">
-        <div className="text-red-500">{error}</div>
-      </div>
-    );
+    return <div className="p-8 text-red-500">{error}</div>;
   }
 
   if (!groupId) {
-    return (
-      <div className="p-8">
-        <div>Please provide a valid group ID</div>
-      </div>
-    );
+    return <div className="p-8">Please provide a valid group ID</div>;
   }
 
   return (
