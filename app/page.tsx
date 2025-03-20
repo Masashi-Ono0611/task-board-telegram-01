@@ -6,6 +6,7 @@ import TaskForm from "./components/TaskForm";
 import { retrieveLaunchParams } from "@telegram-apps/sdk-react";
 import dynamic from 'next/dynamic';
 import { Box, Heading, Text, Flex, Container, Divider, Center, VStack } from '@chakra-ui/react';
+import { UserProfile } from './components/UserProfile';
 
 function useLaunchParams() {
   const [startParam, setStartParam] = useState<string | null>(null);
@@ -134,6 +135,7 @@ function TaskBoard() {
         </VStack>
 
         <Box as="main" w="100%">
+          <UserProfile />
           <TaskForm groupId={groupId} />
           <Divider my={6} />
           <TaskList groupId={groupId} />
