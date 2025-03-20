@@ -136,6 +136,54 @@ http://localhost:3000?startapp=dGVzdC1ncm91cC0x
 
 これらは本番環境でのTypeScriptの実行に必要です。
 
+## デプロイフロー
+
+### 1. 開発時のブランチ管理とVercelデプロイ
+
+1. 機能開発用のブランチを作成
+```bash
+git checkout -b feature/your-feature-name
+```
+
+2. 開発完了後、変更をプッシュ
+```bash
+git add .
+git commit -m "feat: your commit message"
+git push origin feature/your-feature-name
+```
+
+3. Vercelで自動的にプレビューデプロイが作成される
+- URLフォーマット: `https://task-board-telegram-01-git-[branch-name]-masashiono0611s-projects.vercel.app/`
+- このURLで機能テストを実施
+
+### 2. 本番環境へのデプロイ
+
+1. プレビュー環境での動作確認が完了したら、mainブランチへマージ
+```bash
+git checkout main
+git pull
+git merge feature/your-feature-name
+git push
+```
+
+2. Vercelでの本番デプロイ
+- mainブランチへのプッシュ後、自動的に本番環境へのデプロイが開始
+- 本番URL: `https://task-board-telegram-01.vercel.app/`
+- デプロイ状況はVercelのダッシュボードで確認可能
+
+### 3. デプロイの確認
+
+1. 本番環境での動作確認
+- Telegramボットの動作確認
+- Webアプリの機能確認
+- デバッグ情報の確認
+
+2. 問題が発見された場合
+- 新しいブランチを作成して修正
+- 上記のフローを再度実施
+
+注意: 本番環境（mainブランチ）の安定性を保つため、必ずプレビュー環境での十分なテストを行ってからマージしてください。
+
 ## 技術スタック
 
 - **フロントエンド**: Next.js, React, TailwindCSS
