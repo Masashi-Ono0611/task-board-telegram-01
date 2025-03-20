@@ -46,6 +46,29 @@ const maskValue = (value: string | undefined): string => {
 };
 */
 
+const FB_VERSION = '1.0.2';
+
+// デバッグメッセージを保存する配列
+let debugMessages: string[] = [];
+
+// デバッグメッセージを追加する関数
+export const addDebugMessage = (message: string, type: 'info' | 'error' | 'warn' = 'info') => {
+  const time = new Date().toISOString().split('T')[1].split('.')[0];
+  const formattedMessage = `[${time}] [Firebase v${FB_VERSION}] ${message}`;
+  debugMessages.push(formattedMessage);
+  console.log(`${type.toUpperCase()}: ${formattedMessage}`);
+};
+
+// デバッグメッセージを取得する関数
+export const getDebugMessages = () => {
+  return debugMessages;
+};
+
+// デバッグメッセージをクリアする関数
+export const clearDebugMessages = () => {
+  debugMessages = [];
+};
+
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -58,15 +81,15 @@ const firebaseConfig = {
 let db: Firestore;
 
 try {
-  console.log('Firebaseアプリを初期化中...');
+  addDebugMessage('Firebaseアプリを初期化中...');
   const app = initializeApp(firebaseConfig);
-  console.log('Firebaseアプリの初期化成功');
+  addDebugMessage('Firebaseアプリの初期化成功');
 
-  console.log('Firestoreを初期化中...');
+  addDebugMessage('Firestoreを初期化中...');
   db = getFirestore(app);
-  console.log('Firestoreの初期化成功');
+  addDebugMessage('Firestoreの初期化成功');
 } catch (error) {
-  console.error('Firebaseの初期化エラー:', error);
+  addDebugMessage('Firebaseの初期化エラー:' + error, 'error');
   throw error;
 }
 
@@ -78,19 +101,20 @@ interface NewTask {
 }
 
 export const addTask = async (task: NewTask) => {
-  console.log('タスク追加リクエスト:', { ...task, title: task.title.substring(0, 10) + '...' });
+  addDebugMessage('タスク追加リクエスト:' + JSON.stringify({ ...task, title: task.title.substring(0, 10) + '...' }));
   
   if (!db) {
-    console.error('Firestoreが初期化されていません');
-    throw new Error('Firestoreが初期化されていません');
+    const error = 'Firestoreが初期化されていません';
+    addDebugMessage(error, 'error');
+    throw new Error(error);
   }
   
   try {
     const result = await addDoc(collection(db, 'tasks'), task);
-    console.log('タスク追加成功:', result.id);
+    addDebugMessage('タスク追加成功: ' + result.id);
     return result;
   } catch (error) {
-    console.error('タスク追加エラー:', error);
+    addDebugMessage('タスク追加エラー:' + error, 'error');
     throw error;
   }
 };

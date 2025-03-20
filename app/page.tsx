@@ -5,6 +5,7 @@ import Image from "next/image";
 import TaskList from "./components/TaskList";
 import TaskForm from "./components/TaskForm";
 import dynamic from 'next/dynamic';
+import { getDebugMessages, clearDebugMessages } from './lib/firebase';
 
 /* デバッグ関連の型定義とコード - 必要に応じてコメントを外して使用可能
 interface LogEntry {
@@ -16,6 +17,8 @@ interface LogEntry {
 const APP_VERSION = '1.0.1';
 */
 
+const APP_VERSION = '1.0.2';
+
 const TaskBoardClient = dynamic(() => Promise.resolve(TaskBoard), {
   ssr: false
 });
@@ -24,6 +27,26 @@ function TaskBoard() {
   const [groupId, setGroupId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [debugMessages, setDebugMessages] = useState<string[]>([]);
+  const [showDebug, setShowDebug] = useState(false);
+
+  // デバッグメッセージを定期的に更新
+  useEffect(() => {
+    const updateDebugMessages = () => {
+      setDebugMessages(getDebugMessages());
+    };
+
+    // 初回実行
+    updateDebugMessages();
+
+    // 1秒ごとに更新
+    const interval = setInterval(updateDebugMessages, 1000);
+
+    return () => {
+      clearInterval(interval);
+      clearDebugMessages();
+    };
+  }, []);
 
   useEffect(() => {
     const initializeComponent = async () => {
@@ -33,6 +56,11 @@ function TaskBoard() {
         if (typeof window !== 'undefined') {
           const params = new URLSearchParams(window.location.search);
           const startapp = params.get('startapp');
+          const debug = params.get('debug');
+          
+          // デバッグモードの設定
+          setShowDebug(debug === 'true' || process.env.NODE_ENV === 'development');
+          
           console.log("startapp parameter:", startapp);
           
           if (startapp) {
@@ -115,6 +143,20 @@ function TaskBoard() {
       <main className="flex flex-col gap-8">
         <TaskForm groupId={groupId} />
         <TaskList groupId={groupId} />
+        
+        {/* デバッグ情報 */}
+        {showDebug && (
+          <div className="mt-8 p-4 bg-gray-100 rounded-lg">
+            <h2 className="text-lg font-bold mb-2">デバッグ情報 (v{APP_VERSION})</h2>
+            <div className="space-y-2">
+              {debugMessages.map((message, index) => (
+                <div key={index} className="font-mono text-sm">
+                  {message}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </main>
 
       <footer className="flex justify-center text-sm text-gray-500">
