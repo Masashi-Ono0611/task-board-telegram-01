@@ -12,6 +12,8 @@ interface DebugInfo {
   search: string;
   startParam: string | null;
   allParams: Record<string, string>;
+  decodedGroupId: string | null;
+  finalGroupId: string | null;
 }
 
 // クライアントサイドのみのレンダリングのためのコンポーネント
@@ -35,12 +37,76 @@ function TaskBoard() {
         const urlParams = new URLSearchParams(window.location.search);
         const startParam = urlParams.get('startapp');
         
+        // このインラインスクリプトで、すべてのログをページに表示
+        const scriptElement = document.createElement('script');
+        scriptElement.textContent = `
+          // コンソールログをオーバーライド
+          const originalConsoleLog = console.log;
+          const originalConsoleError = console.error;
+          
+          // ログ表示用のDOM要素
+          const logElement = document.createElement('div');
+          logElement.style.position = 'fixed';
+          logElement.style.top = '0';
+          logElement.style.right = '0';
+          logElement.style.backgroundColor = 'rgba(0,0,0,0.8)';
+          logElement.style.color = 'white';
+          logElement.style.padding = '10px';
+          logElement.style.maxHeight = '50vh';
+          logElement.style.overflow = 'auto';
+          logElement.style.zIndex = '9999';
+          logElement.style.fontFamily = 'monospace';
+          logElement.style.fontSize = '12px';
+          document.body.appendChild(logElement);
+          
+          // ログ関数をオーバーライド
+          console.log = function() {
+            originalConsoleLog.apply(console, arguments);
+            const logItem = document.createElement('div');
+            logItem.textContent = Array.from(arguments).map(arg => 
+              typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+            ).join(' ');
+            logElement.appendChild(logItem);
+          };
+          
+          console.error = function() {
+            originalConsoleError.apply(console, arguments);
+            const logItem = document.createElement('div');
+            logItem.style.color = 'red';
+            logItem.textContent = Array.from(arguments).map(arg => 
+              typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+            ).join(' ');
+            logElement.appendChild(logItem);
+          };
+        `;
+        document.head.appendChild(scriptElement);
+        
         // デバッグ情報の収集
+        let decodedId: string | null = null;
+        
+        if (startParam) {
+          try {
+            console.log('Attempting to decode:', startParam);
+            decodedId = atob(startParam);
+            console.log('Successfully decoded to:', decodedId);
+          } catch (decodeError) {
+            console.error('Error decoding base64:', decodeError);
+            decodedId = null;
+          }
+        }
+        
+        // 実際に使用するグループID
+        const finalId = startParam && decodedId ? decodedId : defaultGroupId;
+        console.log('Final group ID to be used:', finalId);
+        
+        // デバッグ情報をセット
         const debug: DebugInfo = {
           fullUrl: window.location.href,
           search: window.location.search,
           startParam: startParam,
-          allParams: {}
+          allParams: {},
+          decodedGroupId: decodedId,
+          finalGroupId: finalId
         };
         
         // すべてのURLパラメータを収集
@@ -49,7 +115,7 @@ function TaskBoard() {
         });
         
         setDebugInfo(debug);
-        console.log('Debug Info:', debug);
+        console.log('Complete Debug Info:', debug);
 
         if (startParam) {
           try {
@@ -85,6 +151,7 @@ function TaskBoard() {
         <div className="text-red-500 mb-4">{error}</div>
         {debugInfo && (
           <div className="bg-gray-100 p-4 rounded text-xs overflow-auto">
+            <h3 className="font-bold mb-2">デバッグ情報:</h3>
             <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
           </div>
         )}
@@ -98,6 +165,7 @@ function TaskBoard() {
         <div className="mb-4">有効なグループIDを提供してください</div>
         {debugInfo && (
           <div className="bg-gray-100 p-4 rounded text-xs overflow-auto">
+            <h3 className="font-bold mb-2">デバッグ情報:</h3>
             <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
           </div>
         )}
