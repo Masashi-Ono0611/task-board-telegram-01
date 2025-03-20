@@ -30,6 +30,7 @@ interface DebugState {
 export default function TaskForm({ groupId }: TaskFormProps) {
   const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(false);
+  
   /* デバッグ関連のstate - 必要に応じてコメントを外して使用可能
   const [debug, setDebug] = useState<DebugState>({ groupId, submissions: [] });
 
@@ -70,6 +71,7 @@ export default function TaskForm({ groupId }: TaskFormProps) {
       */
       
       setTitle('');
+      
     } catch (error) {
       console.error('Error adding task:', error);
     } finally {
@@ -78,41 +80,39 @@ export default function TaskForm({ groupId }: TaskFormProps) {
   };
 
   return (
-    <div>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex gap-4">
+    <div style={{ marginBottom: '1.5rem', padding: '1rem', borderWidth: '1px', borderRadius: '0.5rem', backgroundColor: 'white' }}>
+      <form onSubmit={handleSubmit}>
+        <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', marginBottom: '1rem' }}>新しいタスク</h3>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
           <input
-            type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="新しいタスクを入力..."
-            className="flex-1 p-2 border rounded"
+            style={{
+              flex: 1,
+              padding: '0.5rem',
+              borderRadius: '0.25rem',
+              border: '1px solid #E2E8F0'
+            }}
             disabled={loading}
           />
           <button
             type="submit"
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+            style={{
+              backgroundColor: '#3182CE',
+              color: 'white',
+              padding: '0.5rem 2rem',
+              borderRadius: '0.25rem',
+              border: 'none',
+              opacity: loading || !title.trim() ? 0.5 : 1,
+              cursor: loading || !title.trim() ? 'not-allowed' : 'pointer'
+            }}
             disabled={loading || !title.trim()}
           >
             {loading ? '追加中...' : '追加'}
           </button>
         </div>
       </form>
-      
-      {/* デバッグ情報表示 - 必要に応じてコメントを外して使用可能
-      <div className="mt-4 p-2 bg-gray-50 rounded text-xs">
-        <div className="font-bold">フォームデバッグ情報:</div>
-        <div>グループID: {groupId}</div>
-        {debug.submissions.length > 0 && (
-          <div className="mt-2">
-            <div className="font-semibold">最近の送信:</div>
-            <pre className="mt-1 overflow-auto max-h-20">
-              {JSON.stringify(debug.submissions[debug.submissions.length - 1], null, 2)}
-            </pre>
-          </div>
-        )}
-      </div>
-      */}
     </div>
   );
 } 

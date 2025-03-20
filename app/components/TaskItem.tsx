@@ -11,37 +11,77 @@ interface TaskItemProps {
 
 export default function TaskItem({ task }: TaskItemProps) {
   const [isCompleted, setIsCompleted] = useState(task.completed);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const toggleComplete = async () => {
-    setIsCompleted(!isCompleted);
-    await updateDoc(doc(db, 'tasks', task.id), {
-      completed: !isCompleted,
-    });
+    try {
+      setIsCompleted(!isCompleted);
+      await updateDoc(doc(db, 'tasks', task.id), {
+        completed: !isCompleted,
+      });
+    } catch (error) {
+      console.error('Failed to update task:', error);
+      setIsCompleted(isCompleted); // 元に戻す
+      alert('更新に失敗しました');
+    }
   };
 
   const deleteTask = async () => {
-    await deleteDoc(doc(db, 'tasks', task.id));
+    try {
+      setIsDeleting(true);
+      await deleteDoc(doc(db, 'tasks', task.id));
+    } catch (error) {
+      console.error('Failed to delete task:', error);
+      setIsDeleting(false);
+      alert('削除に失敗しました');
+    }
   };
 
   return (
-    <li className="flex items-center justify-between p-4 bg-white rounded-lg shadow">
-      <div className="flex items-center space-x-4">
-        <input
-          type="checkbox"
-          checked={isCompleted}
-          onChange={toggleComplete}
-          className="form-checkbox h-5 w-5 text-blue-600"
-        />
-        <span className={isCompleted ? 'line-through text-gray-500' : ''}>
-          {task.title}
-        </span>
+    <div 
+      style={{
+        padding: '1rem',
+        backgroundColor: 'white',
+        borderRadius: '0.375rem',
+        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+        opacity: isDeleting ? 0.5 : 1,
+        transition: 'opacity 0.2s'
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <input
+            type="checkbox"
+            checked={isCompleted}
+            onChange={toggleComplete}
+            style={{ width: '1.5rem', height: '1.5rem' }}
+          />
+          <span
+            style={{
+              fontSize: '1rem',
+              textDecoration: isCompleted ? 'line-through' : 'none',
+              color: isCompleted ? '#718096' : '#2D3748'
+            }}
+          >
+            {task.title}
+          </span>
+        </div>
+        <button
+          onClick={deleteTask}
+          disabled={isDeleting}
+          style={{
+            backgroundColor: 'transparent',
+            color: '#E53E3E',
+            border: 'none',
+            borderRadius: '0.25rem',
+            padding: '0.5rem',
+            cursor: isDeleting ? 'not-allowed' : 'pointer'
+          }}
+          aria-label="タスクを削除"
+        >
+          ✕
+        </button>
       </div>
-      <button
-        onClick={deleteTask}
-        className="text-red-500 hover:text-red-700"
-      >
-        Delete
-      </button>
-    </li>
+    </div>
   );
 } 

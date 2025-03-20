@@ -154,68 +154,91 @@ function TaskBoard() {
   }, [startParam]);
 
   if (isLoading) {
-    return <div className="p-8">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen flex-col">
+        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-gray-600">読み込み中...</p>
+      </div>
+    );
   }
 
   if (error && !groupId) {
-    return <div className="p-8 text-red-500">{error}</div>;
+    return (
+      <div className="p-8 text-red-500 text-center">
+        <h2 className="text-lg font-bold mb-2">エラーが発生しました</h2>
+        <p>{error}</p>
+      </div>
+    );
   }
 
   if (!groupId) {
-    return <div className="p-8">Please provide a valid group ID</div>;
+    return (
+      <div className="p-8 text-center">
+        <p>有効なグループIDを提供してください</p>
+      </div>
+    );
   }
 
   return (
-    <div className="grid grid-rows-[auto_1fr_auto] min-h-screen p-8 gap-8">
-      <header className="flex items-center justify-between">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <h1 className="text-2xl font-bold">Task Board - Group {groupId}</h1>
-      </header>
+    <div className="container mx-auto py-6 px-4">
+      <div className="flex flex-col min-h-screen">
+        <header className="flex items-center justify-between mb-8">
+          <Image
+            src="/next.svg"
+            alt="Next.js logo"
+            width={100}
+            height={20}
+            priority
+          />
+          <h1 className="text-xl font-bold text-blue-600">
+            Task Board - Group {groupId}
+          </h1>
+        </header>
 
-      <main className="flex flex-col gap-8">
-        <TaskForm groupId={groupId} />
-        <TaskList groupId={groupId} />
-        
-        {/* デバッグ情報 */}
-        <div className="mt-8">
-          <button
-            onClick={() => setShowDebug(!showDebug)}
-            className="mb-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded"
-          >
-            {showDebug ? 'デバッグ情報を隠す' : 'デバッグ情報を表示'}
-          </button>
-          {showDebug && (
-            <div className="p-4 bg-gray-100 rounded-lg">
-              <h2 className="text-lg font-bold mb-2">デバッグ情報 (v{APP_VERSION})</h2>
-              <div className="space-y-2">
-                {debugMessages.map((message, index) => (
-                  <div key={index} className="font-mono text-sm">
-                    {message}
-                  </div>
-                ))}
+        <main className="flex-1">
+          <TaskForm groupId={groupId} />
+          <hr className="my-6 border-gray-300" />
+          <TaskList groupId={groupId} />
+          
+          {/* デバッグ情報 */}
+          <div className="mt-10">
+            <button
+              onClick={() => setShowDebug(!showDebug)}
+              className="mb-2 px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-100"
+            >
+              {showDebug ? 'デバッグ情報を隠す' : 'デバッグ情報を表示'}
+            </button>
+            {showDebug && (
+              <div className="p-4 bg-gray-50 rounded-md border border-gray-200">
+                <h2 className="text-lg font-bold mb-3">デバッグ情報 (v{APP_VERSION})</h2>
+                <div className="space-y-1">
+                  {debugMessages.map((message, index) => (
+                    <code key={index} className="block text-xs p-1 bg-gray-100 rounded">
+                      {message}
+                    </code>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-      </main>
+            )}
+          </div>
+        </main>
 
-      <footer className="flex justify-center text-sm text-gray-500">
-        <div>Powered by Next.js</div>
-      </footer>
+        <footer className="flex justify-center mt-8 py-4 text-gray-500 text-sm">
+          <p>Powered by Next.js</p>
+        </footer>
+      </div>
     </div>
   );
 }
 
 export default function Home() {
   return (
-    <Suspense fallback={<div className="p-8">Loading...</div>}>
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen flex-col">
+        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-gray-600">アプリを読み込み中...</p>
+      </div>
+    }>
       <TaskBoardClient />
     </Suspense>
   );

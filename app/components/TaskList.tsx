@@ -112,30 +112,54 @@ export default function TaskList({ groupId }: TaskListProps) {
   }, [groupId]);
 
   if (loading) {
-    return <div className="text-center">読み込み中...</div>;
+    return (
+      <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+        <div style={{ 
+          display: 'inline-block',
+          border: '4px solid rgba(66, 153, 225, 0.2)',
+          borderRadius: '50%',
+          borderTop: '4px solid rgba(66, 153, 225, 0.8)',
+          width: '2rem',
+          height: '2rem',
+          animation: 'spin 1s linear infinite'
+        }} />
+        <style jsx>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+        <p style={{ marginTop: '1rem', color: '#4A5568' }}>読み込み中...</p>
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div>
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          {error}
-        </div>
+      <div style={{ 
+        padding: '1rem', 
+        backgroundColor: '#FFF5F5', 
+        borderLeft: '4px solid #F56565',
+        borderRadius: '0.25rem',
+        color: '#C53030'
+      }}>
+        <p style={{ fontWeight: 'bold' }}>エラーが発生しました</p>
+        <p>{error}</p>
       </div>
     );
   }
 
   if (tasks.length === 0) {
     return (
-      <div>
-        <div className="text-center text-gray-500">タスクはありません</div>
+      <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
+        <p style={{ color: '#718096', fontSize: '1.125rem' }}>タスクはありません</p>
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="space-y-4">
+    <div style={{ marginTop: '1rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         {tasks.map((task) => (
           <TaskItem key={task.id} task={task} />
         ))}
