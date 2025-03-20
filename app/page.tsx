@@ -1,29 +1,23 @@
 "use client";
 
 import { Suspense, useEffect, useState } from 'react';
-import Image from "next/image";
 import TaskList from "./components/TaskList";
 import TaskForm from "./components/TaskForm";
 import { retrieveLaunchParams } from "@telegram-apps/sdk-react";
 import dynamic from 'next/dynamic';
 import { Box, Heading, Text, Flex, Container, Divider, Center, VStack } from '@chakra-ui/react';
 
-const APP_VERSION = '1.0.3';
-
-// カスタムフックの作成（最新バージョンの対応）
 function useLaunchParams() {
   const [startParam, setStartParam] = useState<string | null>(null);
 
   useEffect(() => {
     try {
-      // retrieveLaunchParamsの結果を直接取得
       const params = retrieveLaunchParams();
       setStartParam(params.tgWebAppStartParam || null);
     } catch (error) {
       console.warn('Telegramパラメータの取得に失敗しました:', error);
       console.info('ローカル環境では、URLパラメータまたはデフォルト値を使用します');
       
-      // URLパラメータから取得を試みる
       try {
         const urlParams = new URLSearchParams(window.location.search);
         const startapp = urlParams.get('startapp');
@@ -48,27 +42,23 @@ function TaskBoard() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   
-  // Telegram MiniApp SDKからパラメータを取得
   const { startParam } = useLaunchParams();
 
   useEffect(() => {
     const initializeComponent = async () => {
       try {
-        // Telegram MiniApp SDKのパラメータを使用
         if (startParam) {
           try {
             const decodedGroupId = atob(startParam);
             setGroupId(decodedGroupId);
-          } catch (error) {
+          } catch {
             setError("Invalid group ID format");
             
-            // 開発環境ではテスト用のグループIDを使用
             if (process.env.NODE_ENV === 'development') {
               setGroupId('test-group-1');
             }
           }
         } else {
-          // URLパラメータからのフォールバック（従来の方法）
           if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search);
             const startapp = params.get('startapp');
@@ -77,7 +67,7 @@ function TaskBoard() {
               try {
                 const decodedGroupId = atob(startapp);
                 setGroupId(decodedGroupId);
-              } catch (error) {
+              } catch {
                 setError("Invalid group ID format");
                 
                 if (process.env.NODE_ENV === 'development') {
@@ -93,7 +83,7 @@ function TaskBoard() {
             }
           }
         }
-      } catch (error) {
+      } catch {
         setError("An error occurred while initializing the component");
       } finally {
         setIsLoading(false);
