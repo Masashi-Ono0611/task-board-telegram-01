@@ -76,10 +76,8 @@ bot.command('webapp', (ctx) => {
       }
     });
     
-    // 開発環境の場合は、デコードされたグループIDも表示
-    if (process.env.NODE_ENV !== 'production') {
-      ctx.reply(`テスト用情報:\nグループID: ${chatId}\nエンコードされたID: ${encodedGroupId}\n\nデコード確認: ${decodedGroupId}\n\nWebアプリURL: ${webappUrl}`);
-    }
+    // 常にデバッグ情報を表示
+    ctx.reply(`テスト用情報:\nグループID: ${chatId}\nエンコードされたID: ${encodedGroupId}\n\nデコード確認: ${decodedGroupId}\n\nWebアプリURL: ${webappUrl}`);
   } catch (error) {
     console.error('Error in webapp command:', error);
     ctx.reply('タスクボードの起動中にエラーが発生しました。');
