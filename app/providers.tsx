@@ -2,7 +2,7 @@
 
 import { CacheProvider } from '@chakra-ui/next-js'
 import { ChakraProvider, ColorModeScript, extendTheme } from '@chakra-ui/react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import WebApp from '@twa-dev/sdk'
 
 const config = {
@@ -54,21 +54,46 @@ const theme = extendTheme({
 })
 
 function TelegramWebAppProvider({ children }: { children: React.ReactNode }) {
+  const [initError, setInitError] = useState<string | null>(null);
+
   useEffect(() => {
     // Telegram WebAppの初期化
     if (typeof window !== 'undefined') {
       try {
+        // WebAppの初期化
         WebApp.ready();
         // 背景色をTelegramのテーマに合わせる（直接HEX値を使用）
         const bgColor = theme.styles.global({ colorMode: 'light' }).body.bg;
         WebApp.setBackgroundColor(bgColor);
         // プラットフォームに合わせてヘッダーの色も設定
         WebApp.setHeaderColor(bgColor);
+
+        // TelegramGameProxyの初期化
+        if (window.TelegramGameProxy) {
+          console.log('TelegramGameProxy is available');
+          // メソッド存在チェックを追加
+          if (typeof window.TelegramGameProxy.postEvent === 'function') {
+            // 初期化イベントを送信
+            window.TelegramGameProxy.postEvent('web_app_ready', '');
+          } else {
+            console.warn('TelegramGameProxy.postEvent is not a function, skipping event posting');
+            // 利用可能なメソッドの確認
+            console.log('Available TelegramGameProxy methods:', Object.keys(window.TelegramGameProxy));
+          }
+        } else {
+          console.warn('TelegramGameProxy is not available, falling back to WebApp only mode');
+        }
       } catch (error) {
-        console.warn('Telegram WebApp initialization error:', error);
+        console.error('Telegram WebApp initialization error:', error);
+        setInitError(error instanceof Error ? error.message : String(error));
       }
     }
   }, []);
+
+  // エラー表示コンポーネントをここに追加することも可能
+  // if (initError) {
+  //   return <div>Initialization Error: {initError}</div>;
+  // }
 
   return <>{children}</>;
 }

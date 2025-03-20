@@ -176,6 +176,33 @@ export default function TaskList({ groupId }: TaskListProps) {
             <VStack align="start" spacing={2}>
               <Text fontWeight="bold">Debug Information:</Text>
               <Text>Group ID: <Code>{groupId}</Code></Text>
+              
+              {/* Telegram関連のデバッグ情報を追加 */}
+              <Box w="100%">
+                <Text fontWeight="semibold">Telegram Info:</Text>
+                <Box 
+                  mt={1} 
+                  p={2} 
+                  bg={debugCodeBgColor}
+                  borderRadius="md"
+                  fontSize="xs"
+                >
+                  <VStack align="start" spacing={1}>
+                    <Text>WebApp Available: <Code>{typeof window !== 'undefined' && window.Telegram?.WebApp ? 'Yes' : 'No'}</Code></Text>
+                    <Text>GameProxy Available: <Code>{typeof window !== 'undefined' && window.TelegramGameProxy ? 'Yes' : 'No'}</Code></Text>
+                    <Text>BOT_TOKEN: <Code>{process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN ? `${process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN.substring(0, 5)}...` : 'Not Set'}</Code></Text>
+                    <Text>WEBAPP_URL: <Code>{process.env.NEXT_PUBLIC_WEBAPP_URL ? `${process.env.NEXT_PUBLIC_WEBAPP_URL.substring(0, 15)}...` : 'Not Set'}</Code></Text>
+                    {typeof window !== 'undefined' && window.Telegram?.WebApp && (
+                      <>
+                        <Text>Platform: <Code>{window.Telegram.WebApp.platform}</Code></Text>
+                        <Text>Version: <Code>{window.Telegram.WebApp.version}</Code></Text>
+                        <Text>ColorScheme: <Code>{window.Telegram.WebApp.colorScheme}</Code></Text>
+                      </>
+                    )}
+                  </VStack>
+                </Box>
+              </Box>
+              
               {debugQueries.length > 0 && (
                 <Box w="100%">
                   <Text fontWeight="semibold">Recent Query:</Text>
