@@ -39,7 +39,7 @@ export default function TaskList({ groupId }: TaskListProps) {
   useEffect(() => {
     console.log('TaskList component mounted with groupId:', groupId);
     if (!db) {
-      console.error('Firestore is not initialized');
+      console.error('Firestore is not initialized or null');
       setError('データベースの初期化に失敗しました');
       setLoading(false);
       return;
@@ -49,13 +49,23 @@ export default function TaskList({ groupId }: TaskListProps) {
     setLoading(true);
     
     try {
-      // ファイアベースのクエリを構築
-      console.log('Building Firestore query for groupId:', groupId);
+      // Firestoreのクエリを構築する前にコレクションが存在するか確認
+      console.log('Checking if tasks collection exists in Firestore');
+      // コレクションの参照
+      const tasksCollection = collection(db, 'tasks');
+      console.log('Tasks collection reference created');
+      
+      // Firestoreクエリを構築する前のデバッグ
+      console.log('Building Firestore query with where condition: groupId ==', groupId);
+      console.log('Firestore instance:', db ? 'exists' : 'null');
+      
+      // Firestoreのクエリを構築
       const q = query(
-        collection(db, 'tasks'),
+        tasksCollection,
         where('groupId', '==', groupId),
         orderBy('createdAt', 'desc')
       );
+      console.log('Query built successfully');
 
       // クエリのデバッグ情報
       const queryDebugInfo = {
@@ -76,6 +86,10 @@ export default function TaskList({ groupId }: TaskListProps) {
         q,
         (snapshot) => {
           console.log('Snapshot received with', snapshot.size, 'documents');
+          if (snapshot.empty) {
+            console.log('Query returned no documents for groupId:', groupId);
+          }
+          
           const taskList = snapshot.docs.map((doc) => {
             const data = doc.data();
             console.log('Document data:', { id: doc.id, ...data });
@@ -98,6 +112,12 @@ export default function TaskList({ groupId }: TaskListProps) {
         },
         (err) => {
           console.error('Error fetching tasks:', err);
+          // エラーの詳細情報
+          console.error('Error details:', {
+            code: err.code,
+            message: err.message,
+            stack: err.stack
+          });
           setError(`タスクの取得に失敗しました: ${err.message}`);
           setLoading(false);
         }
@@ -109,6 +129,14 @@ export default function TaskList({ groupId }: TaskListProps) {
       };
     } catch (err) {
       console.error('Error setting up query:', err);
+      // エラーオブジェクトの詳細を出力
+      if (err instanceof Error) {
+        console.error('Error details:', {
+          name: err.name,
+          message: err.message,
+          stack: err.stack
+        });
+      }
       setError(`クエリの設定に失敗しました: ${err}`);
       setLoading(false);
     }
