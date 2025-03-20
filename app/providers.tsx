@@ -3,7 +3,12 @@
 import { CacheProvider } from '@chakra-ui/next-js'
 import { ChakraProvider, ColorModeScript, extendTheme } from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
-import WebApp from '@twa-dev/sdk'
+
+// WebAppをクライアントサイドでのみインポート
+let WebApp: any;
+if (typeof window !== 'undefined') {
+  WebApp = require('@twa-dev/sdk').default;
+}
 
 const config = {
   initialColorMode: 'light',
@@ -58,7 +63,7 @@ function TelegramWebAppProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Telegram WebAppの初期化
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && WebApp) {
       try {
         // WebAppの初期化
         WebApp.ready();

@@ -5,6 +5,7 @@ import { onSnapshot, collection, query, where, orderBy } from 'firebase/firestor
 import { db } from '../lib/firebase';
 import { Task } from '../types/task';
 import TaskItem from './TaskItem';
+import { useTelegramUser } from '../hooks/useTelegramUser';
 import { 
   Box, 
   Text, 
@@ -53,6 +54,9 @@ export default function TaskList({ groupId }: TaskListProps) {
   const [error, setError] = useState<string | null>(null);
   const [showDebug, setShowDebug] = useState(false);
   const [debugQueries, setDebugQueries] = useState<DebugQueryResult[]>([]);
+  
+  // Telegramユーザー情報を取得
+  const { user: telegramUser, loading: userLoading, error: userError } = useTelegramUser();
   
   // ダークモード対応の色を設定
   const loadingTextColor = useColorModeValue('gray.600', 'gray.400');
@@ -177,7 +181,7 @@ export default function TaskList({ groupId }: TaskListProps) {
               <Text fontWeight="bold">Debug Information:</Text>
               <Text>Group ID: <Code>{groupId}</Code></Text>
               
-              {/* Telegram関連のデバッグ情報を追加 */}
+              {/* Telegram関連のデバッグ情報 */}
               <Box w="100%">
                 <Text fontWeight="semibold">Telegram Info:</Text>
                 <Box 
@@ -197,6 +201,32 @@ export default function TaskList({ groupId }: TaskListProps) {
                         <Text>Platform: <Code>{window.Telegram.WebApp.platform}</Code></Text>
                         <Text>Version: <Code>{window.Telegram.WebApp.version}</Code></Text>
                         <Text>ColorScheme: <Code>{window.Telegram.WebApp.colorScheme}</Code></Text>
+                      </>
+                    )}
+                  </VStack>
+                </Box>
+              </Box>
+              
+              {/* Telegramユーザー情報 */}
+              <Box w="100%">
+                <Text fontWeight="semibold">User Authentication:</Text>
+                <Box 
+                  mt={1} 
+                  p={2} 
+                  bg={debugCodeBgColor}
+                  borderRadius="md"
+                  fontSize="xs"
+                >
+                  <VStack align="start" spacing={1}>
+                    <Text>Auth Status: <Code>{userLoading ? 'Loading...' : userError ? 'Error' : telegramUser ? 'Authenticated' : 'Not Authenticated'}</Code></Text>
+                    {userError && <Text>Auth Error: <Code color="red.300">{userError}</Code></Text>}
+                    {telegramUser && (
+                      <>
+                        <Text>User ID: <Code>{telegramUser.id}</Code></Text>
+                        <Text>Name: <Code>{telegramUser.first_name} {telegramUser.last_name || ''}</Code></Text>
+                        <Text>Username: <Code>{telegramUser.username || 'N/A'}</Code></Text>
+                        <Text>Language: <Code>{telegramUser.language_code || 'N/A'}</Code></Text>
+                        <Text>Premium: <Code>{telegramUser.is_premium ? 'Yes' : 'No'}</Code></Text>
                       </>
                     )}
                   </VStack>
