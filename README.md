@@ -190,3 +190,36 @@ git push
 - **バックエンド**: Firebase Realtime Database
 - **ボット**: Node.js, Telegraf
 - **言語**: TypeScript
+
+## デバッグモード
+
+アプリケーションにはデバッグモードが組み込まれており、必要に応じて有効化できます。デバッグ機能は現在コメントアウトされていますが、以下のファイルで利用可能です：
+
+### Webアプリケーション（app/page.tsx）
+```typescript
+/* デバッグ関連の型定義とコード
+interface LogEntry {
+  timestamp: string;
+  message: string;
+  type: 'info' | 'error' | 'warn';
+}
+*/
+```
+デバッグ情報の表示を有効にするには、該当するコードブロックのコメントアウトを解除します。
+
+### Firebase（app/lib/firebase.ts）
+```typescript
+/* デバッグ関連の関数とログ
+const logToDOM = (message: string, type: 'info' | 'error' | 'warn' = 'info') => {
+  // 実装詳細
+};
+*/
+```
+Firebaseの接続状態やデータ操作のログを表示するには、該当するコードブロックのコメントアウトを解除します。
+
+デバッグモードを有効にすると以下の情報が表示されます：
+- URLパラメータとその解析結果
+- グループIDのエンコード/デコード状態
+- Firebaseの接続状態
+- データベース操作のログ
+- エラーメッセージの詳細

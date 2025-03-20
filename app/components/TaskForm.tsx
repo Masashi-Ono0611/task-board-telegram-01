@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { addTask } from '../lib/firebase';
 
 interface TaskFormProps {
   groupId: string;
 }
 
+/* デバッグ関連のインターフェース - 必要に応じてコメントを外して使用可能
 interface SubmissionData {
   timestamp: string;
   task: {
@@ -24,24 +25,25 @@ interface DebugState {
   groupId: string;
   submissions: SubmissionData[];
 }
+*/
 
 export default function TaskForm({ groupId }: TaskFormProps) {
   const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(false);
+  /* デバッグ関連のstate - 必要に応じてコメントを外して使用可能
   const [debug, setDebug] = useState<DebugState>({ groupId, submissions: [] });
 
-  // groupIdが変更されたときにデバッグ情報を更新
   useEffect(() => {
     console.log('TaskForm received groupId:', groupId);
     setDebug(prev => ({ ...prev, groupId }));
   }, [groupId]);
+  */
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
     setLoading(true);
-    console.log('Submitting new task with groupId:', groupId);
     
     try {
       const newTask = {
@@ -51,13 +53,9 @@ export default function TaskForm({ groupId }: TaskFormProps) {
         createdAt: new Date().toISOString()
       };
       
-      console.log('Task data to be submitted:', newTask);
+      await addTask(newTask);
       
-      const result = await addTask(newTask);
-      
-      console.log('Task successfully added with ID:', result.id);
-      
-      // デバッグ情報を更新
+      /* デバッグ情報の更新 - 必要に応じてコメントを外して使用可能
       setDebug(prev => ({
         ...prev,
         submissions: [
@@ -69,6 +67,7 @@ export default function TaskForm({ groupId }: TaskFormProps) {
           }
         ]
       }));
+      */
       
       setTitle('');
     } catch (error) {
@@ -100,6 +99,7 @@ export default function TaskForm({ groupId }: TaskFormProps) {
         </div>
       </form>
       
+      {/* デバッグ情報表示 - 必要に応じてコメントを外して使用可能
       <div className="mt-4 p-2 bg-gray-50 rounded text-xs">
         <div className="font-bold">フォームデバッグ情報:</div>
         <div>グループID: {groupId}</div>
@@ -112,6 +112,7 @@ export default function TaskForm({ groupId }: TaskFormProps) {
           </div>
         )}
       </div>
+      */}
     </div>
   );
 } 
