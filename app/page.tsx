@@ -6,17 +6,7 @@ import TaskList from "./components/TaskList";
 import TaskForm from "./components/TaskForm";
 import dynamic from 'next/dynamic';
 
-// デバッグ情報の型定義
-interface DebugInfo {
-  fullUrl: string;
-  search: string;
-  startParam: string | null;
-  allParams: Record<string, string>;
-  decodedGroupId: string | null;
-  finalGroupId: string | null;
-}
-
-// クライアントサイドのみのレンダリングのためのコンポーネント
+// クライアントサイドのみのコンポーネント
 const TaskBoardClient = dynamic(() => Promise.resolve(TaskBoard), {
   ssr: false
 });
@@ -25,98 +15,18 @@ function TaskBoard() {
   const [groupId, setGroupId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
+  const [launchParams, setLaunchParams] = useState<{startParam?: string | null}>({});
 
   useEffect(() => {
     const initializeComponent = async () => {
       try {
-        // ローカル開発用のデフォルトグループID
-        const defaultGroupId = 'test-group-1';
-        
-        // URLからstartappパラメータを取得
+        // URLパラメータから直接startappを取得
         const urlParams = new URLSearchParams(window.location.search);
         const startParam = urlParams.get('startapp');
         
-        // このインラインスクリプトで、すべてのログをページに表示
-        const scriptElement = document.createElement('script');
-        scriptElement.textContent = `
-          // コンソールログをオーバーライド
-          const originalConsoleLog = console.log;
-          const originalConsoleError = console.error;
-          
-          // ログ表示用のDOM要素
-          const logElement = document.createElement('div');
-          logElement.style.position = 'fixed';
-          logElement.style.top = '0';
-          logElement.style.right = '0';
-          logElement.style.backgroundColor = 'rgba(0,0,0,0.8)';
-          logElement.style.color = 'white';
-          logElement.style.padding = '10px';
-          logElement.style.maxHeight = '50vh';
-          logElement.style.overflow = 'auto';
-          logElement.style.zIndex = '9999';
-          logElement.style.fontFamily = 'monospace';
-          logElement.style.fontSize = '12px';
-          document.body.appendChild(logElement);
-          
-          // ログ関数をオーバーライド
-          console.log = function() {
-            originalConsoleLog.apply(console, arguments);
-            const logItem = document.createElement('div');
-            logItem.textContent = Array.from(arguments).map(arg => 
-              typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-            ).join(' ');
-            logElement.appendChild(logItem);
-          };
-          
-          console.error = function() {
-            originalConsoleError.apply(console, arguments);
-            const logItem = document.createElement('div');
-            logItem.style.color = 'red';
-            logItem.textContent = Array.from(arguments).map(arg => 
-              typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-            ).join(' ');
-            logElement.appendChild(logItem);
-          };
-        `;
-        document.head.appendChild(scriptElement);
+        setLaunchParams({ startParam });
+        console.log("Launch params:", { startParam });
         
-        // デバッグ情報の収集
-        let decodedId: string | null = null;
-        
-        if (startParam) {
-          try {
-            console.log('Attempting to decode:', startParam);
-            decodedId = atob(startParam);
-            console.log('Successfully decoded to:', decodedId);
-          } catch (decodeError) {
-            console.error('Error decoding base64:', decodeError);
-            decodedId = null;
-          }
-        }
-        
-        // 実際に使用するグループID
-        const finalId = startParam && decodedId ? decodedId : defaultGroupId;
-        console.log('Final group ID to be used:', finalId);
-        
-        // デバッグ情報をセット
-        const debug: DebugInfo = {
-          fullUrl: window.location.href,
-          search: window.location.search,
-          startParam: startParam,
-          allParams: {},
-          decodedGroupId: decodedId,
-          finalGroupId: finalId
-        };
-        
-        // すべてのURLパラメータを収集
-        urlParams.forEach((value, key) => {
-          debug.allParams[key] = value;
-        });
-        
-        setDebugInfo(debug);
-        console.log('Complete Debug Info:', debug);
-
         if (startParam) {
           try {
             const decodedGroupId = atob(startParam);
@@ -124,15 +34,21 @@ function TaskBoard() {
             setGroupId(decodedGroupId);
           } catch (error) {
             console.error("Error decoding group ID:", error);
-            setError("グループIDの形式が無効です");
+            setError("Invalid group ID format");
           }
         } else {
-          console.log("Using default group ID for development");
-          setGroupId(defaultGroupId);
+          console.log("No startapp parameter available");
+          // 開発用のデフォルトグループID
+          if (process.env.NODE_ENV === 'development') {
+            console.log("Using test group ID for development");
+            setGroupId('test-group-1');
+          } else {
+            setError("No group ID provided");
+          }
         }
       } catch (error) {
         console.error("Error in initializeComponent:", error);
-        setError("コンポーネントの初期化中にエラーが発生しました");
+        setError("An error occurred while initializing the component");
       } finally {
         setIsLoading(false);
       }
@@ -142,35 +58,22 @@ function TaskBoard() {
   }, []);
 
   if (isLoading) {
-    return <div className="p-8">読み込み中...</div>;
+    return <div className="p-8">Loading...</div>;
   }
 
   if (error) {
     return (
       <div className="p-8">
-        <div className="text-red-500 mb-4">{error}</div>
-        {debugInfo && (
-          <div className="bg-gray-100 p-4 rounded text-xs overflow-auto">
-            <h3 className="font-bold mb-2">デバッグ情報:</h3>
-            <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
-          </div>
-        )}
+        <div className="text-red-500">{error}</div>
+        <div className="mt-4 text-sm">
+          Launch Params: {JSON.stringify(launchParams)}
+        </div>
       </div>
     );
   }
 
   if (!groupId) {
-    return (
-      <div className="p-8">
-        <div className="mb-4">有効なグループIDを提供してください</div>
-        {debugInfo && (
-          <div className="bg-gray-100 p-4 rounded text-xs overflow-auto">
-            <h3 className="font-bold mb-2">デバッグ情報:</h3>
-            <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
-          </div>
-        )}
-      </div>
-    );
+    return <div className="p-8">Please provide a valid group ID</div>;
   }
 
   return (
@@ -184,22 +87,23 @@ function TaskBoard() {
           height={20}
           priority
         />
-        <h1 className="text-2xl font-bold">タスクボード - グループ {groupId}</h1>
+        <h1 className="text-2xl font-bold">Task Board - Group {groupId}</h1>
       </header>
 
       <main className="flex flex-col gap-8">
-        {debugInfo && (
-          <div className="bg-gray-100 p-4 rounded text-xs overflow-auto mb-4">
-            <h3 className="font-bold mb-2">デバッグ情報:</h3>
-            <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
-          </div>
-        )}
+        <div className="bg-gray-100 p-3 rounded text-xs mb-4">
+          <div><strong>デバッグ情報</strong></div>
+          <div>グループID: {groupId}</div>
+          <div>起動パラメータ: {launchParams?.startParam}</div>
+        </div>
+        
         <TaskForm groupId={groupId} />
         <TaskList groupId={groupId} />
       </main>
 
       <footer className="flex justify-center text-sm text-gray-500">
-        Powered by Next.js
+        <div>Powered by Next.js</div>
+        <div className="ml-4 text-xs">Group ID: {groupId}</div>
       </footer>
     </div>
   );
@@ -207,7 +111,7 @@ function TaskBoard() {
 
 export default function Home() {
   return (
-    <Suspense fallback={<div className="p-8">読み込み中...</div>}>
+    <Suspense fallback={<div className="p-8">Loading...</div>}>
       <TaskBoardClient />
     </Suspense>
   );
