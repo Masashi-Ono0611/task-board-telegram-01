@@ -2,6 +2,16 @@
 
 import { useState } from 'react';
 import { addTask } from '../lib/firebase';
+import { 
+  Box, 
+  Input, 
+  Button,
+  FormControl,
+  FormLabel,
+  Flex,
+  useToast,
+  useColorModeValue
+} from '@chakra-ui/react';
 
 interface TaskFormProps {
   groupId: string;
@@ -30,6 +40,11 @@ interface DebugState {
 export default function TaskForm({ groupId }: TaskFormProps) {
   const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(false);
+  const toast = useToast();
+  
+  // ダークモード対応の色を設定
+  const bgColor = useColorModeValue('white', 'gray.700');
+  const borderColor = useColorModeValue('gray.200', 'gray.600');
   
   /* デバッグ関連のstate - 必要に応じてコメントを外して使用可能
   const [debug, setDebug] = useState<DebugState>({ groupId, submissions: [] });
@@ -70,49 +85,62 @@ export default function TaskForm({ groupId }: TaskFormProps) {
       }));
       */
       
+      toast({
+        title: "タスクを追加しました",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
+      
       setTitle('');
       
     } catch (error) {
       console.error('Error adding task:', error);
+      toast({
+        title: "エラーが発生しました",
+        description: "タスクの追加に失敗しました。",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ marginBottom: '1.5rem', padding: '1rem', borderWidth: '1px', borderRadius: '0.5rem', backgroundColor: 'white' }}>
+    <Box 
+      mb={6} 
+      p={4} 
+      bg={bgColor}
+      borderWidth="1px" 
+      borderColor={borderColor}
+      borderRadius="lg"
+    >
       <form onSubmit={handleSubmit}>
-        <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', marginBottom: '1rem' }}>新しいタスク</h3>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="新しいタスクを入力..."
-            style={{
-              flex: 1,
-              padding: '0.5rem',
-              borderRadius: '0.25rem',
-              border: '1px solid #E2E8F0'
-            }}
-            disabled={loading}
-          />
-          <button
-            type="submit"
-            style={{
-              backgroundColor: '#3182CE',
-              color: 'white',
-              padding: '0.5rem 2rem',
-              borderRadius: '0.25rem',
-              border: 'none',
-              opacity: loading || !title.trim() ? 0.5 : 1,
-              cursor: loading || !title.trim() ? 'not-allowed' : 'pointer'
-            }}
-            disabled={loading || !title.trim()}
-          >
-            {loading ? '追加中...' : '追加'}
-          </button>
-        </div>
+        <FormControl>
+          <FormLabel fontWeight="bold">新しいタスク</FormLabel>
+          <Flex gap={2}>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="新しいタスクを入力..."
+              disabled={loading}
+              variant="filled"
+            />
+            <Button
+              type="submit"
+              colorScheme="blue"
+              isLoading={loading}
+              loadingText="追加中"
+              isDisabled={!title.trim()}
+              px={8}
+            >
+              追加
+            </Button>
+          </Flex>
+        </FormControl>
       </form>
-    </div>
+    </Box>
   );
 } 

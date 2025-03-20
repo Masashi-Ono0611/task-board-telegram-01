@@ -4,6 +4,16 @@ import { useState } from 'react';
 import { updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Task } from '../types/task';
+import { 
+  Box, 
+  Flex, 
+  Text, 
+  IconButton,
+  Checkbox,
+  useToast,
+  useColorModeValue
+} from '@chakra-ui/react';
+import { DeleteIcon } from '@chakra-ui/icons';
 
 interface TaskItemProps {
   task: Task;
@@ -12,6 +22,12 @@ interface TaskItemProps {
 export default function TaskItem({ task }: TaskItemProps) {
   const [isCompleted, setIsCompleted] = useState(task.completed);
   const [isDeleting, setIsDeleting] = useState(false);
+  const toast = useToast();
+
+  // ダークモード対応の色を設定
+  const bgColor = useColorModeValue('white', 'gray.700');
+  const textColor = useColorModeValue('gray.800', 'white');
+  const completedTextColor = useColorModeValue('gray.500', 'gray.400');
 
   const toggleComplete = async () => {
     try {
@@ -22,7 +38,12 @@ export default function TaskItem({ task }: TaskItemProps) {
     } catch (error) {
       console.error('Failed to update task:', error);
       setIsCompleted(isCompleted); // 元に戻す
-      alert('更新に失敗しました');
+      toast({
+        title: "更新に失敗しました",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
     }
   };
 
@@ -30,58 +51,60 @@ export default function TaskItem({ task }: TaskItemProps) {
     try {
       setIsDeleting(true);
       await deleteDoc(doc(db, 'tasks', task.id));
+      toast({
+        title: "タスクを削除しました",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
     } catch (error) {
       console.error('Failed to delete task:', error);
       setIsDeleting(false);
-      alert('削除に失敗しました');
+      toast({
+        title: "削除に失敗しました",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
     }
   };
 
   return (
-    <div 
-      style={{
-        padding: '1rem',
-        backgroundColor: 'white',
-        borderRadius: '0.375rem',
-        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
-        opacity: isDeleting ? 0.5 : 1,
-        transition: 'opacity 0.2s'
-      }}
+    <Box 
+      p={4} 
+      bg={bgColor}
+      borderRadius="md" 
+      boxShadow="sm"
+      opacity={isDeleting ? 0.5 : 1}
+      transition="opacity 0.2s"
+      borderWidth="1px"
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <input
-            type="checkbox"
-            checked={isCompleted}
+      <Flex justify="space-between" align="center">
+        <Flex align="center" gap={3}>
+          <Checkbox
+            isChecked={isCompleted}
             onChange={toggleComplete}
-            style={{ width: '1.5rem', height: '1.5rem' }}
+            colorScheme="blue"
+            size="lg"
           />
-          <span
-            style={{
-              fontSize: '1rem',
-              textDecoration: isCompleted ? 'line-through' : 'none',
-              color: isCompleted ? '#718096' : '#2D3748'
-            }}
+          <Text
+            fontSize="md"
+            textDecoration={isCompleted ? 'line-through' : 'none'}
+            color={isCompleted ? completedTextColor : textColor}
           >
             {task.title}
-          </span>
-        </div>
-        <button
-          onClick={deleteTask}
-          disabled={isDeleting}
-          style={{
-            backgroundColor: 'transparent',
-            color: '#E53E3E',
-            border: 'none',
-            borderRadius: '0.25rem',
-            padding: '0.5rem',
-            cursor: isDeleting ? 'not-allowed' : 'pointer'
-          }}
+          </Text>
+        </Flex>
+        <IconButton
           aria-label="タスクを削除"
-        >
-          ✕
-        </button>
-      </div>
-    </div>
+          icon={<DeleteIcon />}
+          onClick={deleteTask}
+          isDisabled={isDeleting}
+          colorScheme="red"
+          variant="ghost"
+          size="sm"
+        />
+      </Flex>
+    </Box>
   );
 } 

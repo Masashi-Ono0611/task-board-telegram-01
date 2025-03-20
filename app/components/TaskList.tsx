@@ -5,6 +5,17 @@ import { onSnapshot, collection, query, where, orderBy } from 'firebase/firestor
 import { db } from '../lib/firebase';
 import { Task } from '../types/task';
 import TaskItem from './TaskItem';
+import { 
+  Box, 
+  Text, 
+  Stack,
+  Spinner,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
+  useColorModeValue
+} from '@chakra-ui/react';
 
 interface TaskListProps {
   groupId: string;
@@ -36,6 +47,11 @@ export default function TaskList({ groupId }: TaskListProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // ダークモード対応の色を設定
+  const loadingTextColor = useColorModeValue('gray.600', 'gray.400');
+  const emptyTextColor = useColorModeValue('gray.500', 'gray.400');
+
   /* デバッグ関連のstate - 必要に応じてコメントを外して使用可能
   const [debugQueries, setDebugQueries] = useState<DebugQueryResult[]>([]);
   */
@@ -113,57 +129,40 @@ export default function TaskList({ groupId }: TaskListProps) {
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '2rem 0' }}>
-        <div style={{ 
-          display: 'inline-block',
-          border: '4px solid rgba(66, 153, 225, 0.2)',
-          borderRadius: '50%',
-          borderTop: '4px solid rgba(66, 153, 225, 0.8)',
-          width: '2rem',
-          height: '2rem',
-          animation: 'spin 1s linear infinite'
-        }} />
-        <style jsx>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-        <p style={{ marginTop: '1rem', color: '#4A5568' }}>読み込み中...</p>
-      </div>
+      <Box textAlign="center" py={8}>
+        <Spinner size="xl" color="blue.500" />
+        <Text mt={4} color={loadingTextColor}>読み込み中...</Text>
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <div style={{ 
-        padding: '1rem', 
-        backgroundColor: '#FFF5F5', 
-        borderLeft: '4px solid #F56565',
-        borderRadius: '0.25rem',
-        color: '#C53030'
-      }}>
-        <p style={{ fontWeight: 'bold' }}>エラーが発生しました</p>
-        <p>{error}</p>
-      </div>
+      <Alert status="error" variant="subtle" borderRadius="md">
+        <AlertIcon />
+        <Box>
+          <AlertTitle>エラーが発生しました</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Box>
+      </Alert>
     );
   }
 
   if (tasks.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
-        <p style={{ color: '#718096', fontSize: '1.125rem' }}>タスクはありません</p>
-      </div>
+      <Box textAlign="center" py={6}>
+        <Text color={emptyTextColor} fontSize="lg">タスクはありません</Text>
+      </Box>
     );
   }
 
   return (
-    <div style={{ marginTop: '1rem' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <Box mt={4}>
+      <Stack spacing={4}>
         {tasks.map((task) => (
           <TaskItem key={task.id} task={task} />
         ))}
-      </div>
-    </div>
+      </Stack>
+    </Box>
   );
 } 
