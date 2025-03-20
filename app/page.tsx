@@ -13,6 +13,9 @@ interface LogEntry {
   type: 'info' | 'error' | 'warn';
 }
 
+// バージョン識別用のコンスタント
+const APP_VERSION = '1.0.1'; // キャッシュをバイパスするためのバージョン変数
+
 // クライアントサイドのみのコンポーネント
 const TaskBoardClient = dynamic(() => Promise.resolve(TaskBoard), {
   ssr: false
@@ -25,6 +28,10 @@ function TaskBoard() {
   const [urlParams, setUrlParams] = useState<{[key: string]: string | null}>({});
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const mountedRef = useRef(false);
+
+  // デバッグモードを確認
+  const isDebugMode = typeof window !== 'undefined' && 
+    (window.location.search.includes('debug=true') || process.env.NODE_ENV === 'development');
 
   // ログ関数をオーバーライドして、ステートに保存する
   useEffect(() => {
@@ -63,8 +70,26 @@ function TaskBoard() {
         addLog(args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' '), 'warn');
       };
       
+      // 必ず表示されるようにHTMLに直接書き込む
+      const debugDiv = document.createElement('div');
+      debugDiv.style.position = 'fixed';
+      debugDiv.style.top = '0';
+      debugDiv.style.left = '0';
+      debugDiv.style.width = '100%';
+      debugDiv.style.backgroundColor = 'rgba(255, 255, 0, 0.8)';
+      debugDiv.style.color = 'black';
+      debugDiv.style.padding = '5px';
+      debugDiv.style.zIndex = '9999';
+      debugDiv.style.fontSize = '12px';
+      debugDiv.innerHTML = `
+        <strong>デバッグモード: v${APP_VERSION}</strong> - 
+        URL: ${window.location.href} - 
+        時刻: ${new Date().toISOString()}
+      `;
+      document.body.appendChild(debugDiv);
+      
       // マウント時に初期ログ
-      addLog('Component mounted');
+      addLog(`Component mounted - v${APP_VERSION}`);
       addLog(`URL: ${window.location.href}`);
     }
   }, []);
@@ -133,18 +158,23 @@ function TaskBoard() {
     initializeComponent();
   }, []);
 
+  // 常にデバッグ情報を表示するヘルパー関数
+  const renderDebugLogs = () => (
+    <div className="mt-4 p-2 bg-yellow-100 text-xs overflow-auto max-h-60">
+      <div className="font-bold">デバッグログ (v{APP_VERSION}):</div>
+      {logs.map((log, i) => (
+        <div key={i} className={`${log.type === 'error' ? 'text-red-500' : log.type === 'warn' ? 'text-orange-500' : 'text-gray-700'}`}>
+          [{log.timestamp.split('T')[1].split('.')[0]}] {log.message}
+        </div>
+      ))}
+    </div>
+  );
+
   if (isLoading) {
     return (
       <div className="p-8">
         <div>Loading...</div>
-        <div className="mt-4 p-2 bg-yellow-100 text-xs overflow-auto max-h-60">
-          <div className="font-bold">デバッグログ:</div>
-          {logs.map((log, i) => (
-            <div key={i} className={`${log.type === 'error' ? 'text-red-500' : log.type === 'warn' ? 'text-orange-500' : 'text-gray-700'}`}>
-              [{log.timestamp.split('T')[1].split('.')[0]}] {log.message}
-            </div>
-          ))}
-        </div>
+        {renderDebugLogs()}
       </div>
     );
   }
@@ -156,14 +186,7 @@ function TaskBoard() {
         <div className="mt-4 text-sm">
           URL Parameters: {JSON.stringify(urlParams)}
         </div>
-        <div className="mt-4 p-2 bg-yellow-100 text-xs overflow-auto max-h-60">
-          <div className="font-bold">デバッグログ:</div>
-          {logs.map((log, i) => (
-            <div key={i} className={`${log.type === 'error' ? 'text-red-500' : log.type === 'warn' ? 'text-orange-500' : 'text-gray-700'}`}>
-              [{log.timestamp.split('T')[1].split('.')[0]}] {log.message}
-            </div>
-          ))}
-        </div>
+        {renderDebugLogs()}
       </div>
     );
   }
@@ -172,14 +195,7 @@ function TaskBoard() {
     return (
       <div className="p-8">
         <div>Please provide a valid group ID</div>
-        <div className="mt-4 p-2 bg-yellow-100 text-xs overflow-auto max-h-60">
-          <div className="font-bold">デバッグログ:</div>
-          {logs.map((log, i) => (
-            <div key={i} className={`${log.type === 'error' ? 'text-red-500' : log.type === 'warn' ? 'text-orange-500' : 'text-gray-700'}`}>
-              [{log.timestamp.split('T')[1].split('.')[0]}] {log.message}
-            </div>
-          ))}
-        </div>
+        {renderDebugLogs()}
       </div>
     );
   }
@@ -200,7 +216,7 @@ function TaskBoard() {
 
       <main className="flex flex-col gap-8">
         <div className="bg-gray-100 p-3 rounded text-xs mb-4">
-          <div><strong>デバッグ情報</strong></div>
+          <div><strong>デバッグ情報 (v{APP_VERSION})</strong></div>
           <div>グループID: {groupId}</div>
           <div>起動パラメータ: {urlParams['startapp'] || "なし"}</div>
           <div>すべてのパラメータ: {JSON.stringify(urlParams)}</div>
