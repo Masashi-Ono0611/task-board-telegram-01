@@ -15,35 +15,51 @@ function TaskBoard() {
   const [groupId, setGroupId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [launchParams, setLaunchParams] = useState<{startParam?: string | null}>({});
+  const [urlParams, setUrlParams] = useState<{[key: string]: string | null}>({});
 
   useEffect(() => {
     const initializeComponent = async () => {
       try {
-        // URLパラメータから直接startappを取得
-        const urlParams = new URLSearchParams(window.location.search);
-        const startParam = urlParams.get('startapp');
-        
-        setLaunchParams({ startParam });
-        console.log("Launch params:", { startParam });
-        
-        if (startParam) {
-          try {
-            const decodedGroupId = atob(startParam);
-            console.log("Decoded Group ID:", decodedGroupId);
-            setGroupId(decodedGroupId);
-          } catch (error) {
-            console.error("Error decoding group ID:", error);
-            setError("Invalid group ID format");
-          }
-        } else {
-          console.log("No startapp parameter available");
-          // 開発用のデフォルトグループID
-          if (process.env.NODE_ENV === 'development') {
-            console.log("Using test group ID for development");
-            setGroupId('test-group-1');
+        // URLからパラメータを取得
+        if (typeof window !== 'undefined') {
+          const params = new URLSearchParams(window.location.search);
+          const paramsObj: {[key: string]: string | null} = {};
+          
+          // すべてのURLパラメータを取得
+          params.forEach((value, key) => {
+            paramsObj[key] = value;
+          });
+          
+          setUrlParams(paramsObj);
+          console.log("URL parameters:", paramsObj);
+          
+          // startappパラメータを確認
+          const startapp = params.get('startapp');
+          if (startapp) {
+            try {
+              const decodedGroupId = atob(startapp);
+              console.log("Decoded Group ID:", decodedGroupId);
+              setGroupId(decodedGroupId);
+            } catch (error) {
+              console.error("Error decoding group ID:", error);
+              setError("Invalid group ID format");
+              
+              // 開発用フォールバック
+              if (process.env.NODE_ENV === 'development') {
+                console.log("Using test group ID for development");
+                setGroupId('test-group-1');
+              }
+            }
           } else {
-            setError("No group ID provided");
+            console.log("No startapp parameter available");
+            
+            // 開発環境では、デフォルトグループIDを使用
+            if (process.env.NODE_ENV === 'development') {
+              console.log("Using test group ID for development");
+              setGroupId('test-group-1');
+            } else {
+              setError("No group ID provided");
+            }
           }
         }
       } catch (error) {
@@ -61,12 +77,12 @@ function TaskBoard() {
     return <div className="p-8">Loading...</div>;
   }
 
-  if (error) {
+  if (error && !groupId) {
     return (
       <div className="p-8">
         <div className="text-red-500">{error}</div>
         <div className="mt-4 text-sm">
-          Launch Params: {JSON.stringify(launchParams)}
+          URL Parameters: {JSON.stringify(urlParams)}
         </div>
       </div>
     );
@@ -94,7 +110,9 @@ function TaskBoard() {
         <div className="bg-gray-100 p-3 rounded text-xs mb-4">
           <div><strong>デバッグ情報</strong></div>
           <div>グループID: {groupId}</div>
-          <div>起動パラメータ: {launchParams?.startParam}</div>
+          <div>起動パラメータ: {urlParams['startapp'] || "なし"}</div>
+          <div>すべてのパラメータ: {JSON.stringify(urlParams)}</div>
+          <div>URL: {typeof window !== 'undefined' ? window.location.href : ''}</div>
         </div>
         
         <TaskForm groupId={groupId} />
@@ -115,4 +133,4 @@ export default function Home() {
       <TaskBoardClient />
     </Suspense>
   );
-} 
+}
