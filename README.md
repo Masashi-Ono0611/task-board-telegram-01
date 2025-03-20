@@ -14,6 +14,7 @@ Telegramミニアプリとボットを組み合わせたタスク管理アプリ
 2. **Telegram Bot**
    - ミニアプリへのアクセスを提供
    - コマンドベースのインタラクション
+   - グループ固有のタスク管理を実現
 
 ## ホスティング構成
 
@@ -37,9 +38,9 @@ Telegramミニアプリとボットを組み合わせたタスク管理アプリ
 プロジェクトのルートディレクトリに`.env.local`ファイルを作成し、以下の環境変数を設定します：
 
 ```env
-# Bot Configuration
-BOT_TOKEN=your_bot_token_here
-WEBAPP_URL=your_webapp_url_here
+# Development Bot Configuration
+BOT_TOKEN=8027369590:AAF_15giPci2zsUJAGdRfRCR9g4CGWm7SZA  # ローカル開発用ボット (@local_taskboard_masa_bot)
+WEBAPP_URL=http://localhost:3000
 
 # Firebase Configuration
 NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
@@ -60,7 +61,15 @@ Railway.appのダッシュボードで以下の手順で環境変数を設定し
 
 1. 「Variables」タブを開く
 2. 「Raw Editor」ボタンをクリック
-3. ローカルの`.env.local`ファイルの内容をコピー＆ペースト
+3. 以下の環境変数を設定：
+   ```
+   # Production Bot Configuration
+   BOT_TOKEN=8073261576:AAGeiHFrMEFPgKHZeSLDbINxc996FCAwy0o  # 本番用ボット (@dev_test_masashi_bot)
+   WEBAPP_URL=https://task-board-telegram-01.vercel.app
+   
+   # 追加の環境変数（必要に応じて）
+   NODE_ENV=production
+   ```
 
 **注意**: 環境変数の設定時に以下のエラーが発生した場合：
 ```
@@ -81,6 +90,29 @@ npm run dev
 npm run bot:dev
 ```
 
+## グループ固有のタスク管理
+
+このアプリケーションはTelegramグループごとに個別のタスクリストを管理します：
+
+1. ユーザーがTelegramグループで`/webapp`コマンドを実行
+2. ボットがそのグループのIDを取得してBase64エンコード
+3. エンコードしたIDをURLパラメータとしてWebアプリに渡す
+4. Webアプリ側でIDをデコードして取得
+5. そのグループIDに紐づくタスクをFirebaseから取得
+6. 取得したタスクを画面に表示
+
+### ローカルでのテスト方法
+
+実際のグループIDを使わずにテストする場合：
+```
+http://localhost:3000?startapp=テストID（Base64エンコード）
+```
+
+例：`test-group-1`というIDをテストする場合：
+```
+http://localhost:3000?startapp=dGVzdC1ncm91cC0x
+```
+
 ## デプロイメント設定
 
 ### Telegram Bot用の設定
@@ -90,7 +122,8 @@ npm run bot:dev
 {
   "scripts": {
     "start": "ts-node bot/index.ts",
-    "bot:dev": "ts-node bot/index.ts"
+    "bot:dev": "NODE_ENV=development ts-node --esm bot/index.ts",
+    "bot:start": "NODE_ENV=production ts-node --esm bot/index.ts"
   }
 }
 ```

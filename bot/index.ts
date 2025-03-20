@@ -1,38 +1,88 @@
-const { Telegraf } = require('telegraf');
-const { BOT_TOKEN, WEBAPP_URL } = require('./config');
+import { Telegraf } from 'telegraf';
+import type { Context } from 'telegraf';
+import dotenv from 'dotenv';
 
-if (!BOT_TOKEN) {
-  throw new Error('BOT_TOKEN must be provided!');
+// 環境変数の読み込み
+if (process.env.NODE_ENV !== 'production') {
+  console.log('Loading development environment variables...');
+  dotenv.config({ path: '.env.local' });
+} else {
+  console.log('Using production environment variables...');
+  dotenv.config();
 }
+
+const BOT_TOKEN = process.env.BOT_TOKEN || '';
+const WEBAPP_URL = process.env.WEBAPP_URL || '';
+
+// URLの環境設定
+console.log('Environment:', {
+  NODE_ENV: process.env.NODE_ENV || 'development',
+  WEBAPP_URL: WEBAPP_URL,
+  BOT_TOKEN: BOT_TOKEN ? 'Set' : 'Not set'
+});
 
 const bot = new Telegraf(BOT_TOKEN);
 
 // Basic commands
-bot.command('start', (ctx: any) => {
-  ctx.reply('Welcome to TaskVaultBot! 🚀\nUse /help to see available commands.');
+bot.command('start', (ctx) => {
+  ctx.reply('Welcome! Use /help to see available commands.');
 });
 
-bot.command('help', (ctx: any) => {
+bot.command('help', (ctx) => {
   ctx.reply(
     'Available commands:\n' +
     '/start - Start the bot\n' +
     '/help - Show this help message\n' +
-    '/webapp - Open the Mini App'
+    '/webapp - Open the Task Board web app'
   );
 });
 
-bot.command('webapp', (ctx: any) => {
-  ctx.reply('Open Web App', {
+bot.command('webapp', (ctx) => {
+  const chatId = ctx.chat.id;
+  const encodedGroupId = Buffer.from(chatId.toString()).toString('base64');
+  
+  // URLの生成（本番環境では設定されたWebアプリURLを使用）
+  const webappUrl = `${WEBAPP_URL}?startapp=${encodedGroupId}`;
+  
+  console.log('Chat Info:', {
+    chatId: chatId,
+    chatType: ctx.chat.type,
+    encodedGroupId: encodedGroupId,
+    decodedGroupId: Buffer.from(encodedGroupId, 'base64').toString(),
+    webappUrl: webappUrl
+  });
+  
+  ctx.reply('タスクボードを開く', {
     reply_markup: {
       inline_keyboard: [[
-        { text: "Open App", url: WEBAPP_URL || '' }
+        { text: "Open App", url: webappUrl }
       ]]
     }
   });
+  
+  // 開発環境の場合は、デコードされたグループIDも表示
+  if (process.env.NODE_ENV !== 'production') {
+    ctx.reply(`テスト用情報:\nグループID: ${chatId}\nエンコードされたID: ${encodedGroupId}\n\nこのIDをテスト用に使用できます。`);
+  }
 });
 
+// デバッグ用：開発環境でのみメッセージログを出力
+if (process.env.NODE_ENV !== 'production') {
+  bot.on('message', (ctx: Context) => {
+    if (ctx.chat) {
+      console.log('Received message in chat:', {
+        chatId: ctx.chat.id,
+        chatType: ctx.chat.type,
+        messageText: 'message' in ctx.update ? 
+          ('text' in ctx.update.message ? ctx.update.message.text : '[非テキストメッセージ]') 
+          : '[不明なメッセージ]'
+      });
+    }
+  });
+}
+
 bot.launch().then(() => {
-  console.log('Bot is running...');
+  console.log(`Bot is running in ${process.env.NODE_ENV || 'development'} mode...`);
 });
 
 // Enable graceful stop

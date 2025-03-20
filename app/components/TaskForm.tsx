@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { addDoc, collection } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { addTask } from '../lib/firebase';
 
 interface TaskFormProps {
   groupId: string;
@@ -10,50 +9,47 @@ interface TaskFormProps {
 
 export default function TaskForm({ groupId }: TaskFormProps) {
   const [title, setTitle] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !db) return;
+    if (!title.trim()) return;
 
+    setLoading(true);
     try {
-      await addDoc(collection(db, 'tasks'), {
-        title: title.trim(),
+      await addTask({
+        title,
         completed: false,
-        createdAt: new Date(),
         groupId,
+        createdAt: new Date().toISOString()
       });
-
       setTitle('');
-      setError(null);
-    } catch (err) {
-      console.error('Error adding task:', err);
-      setError('タスクの追加に失敗しました');
+    } catch (error) {
+      console.error('Error adding task:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="space-y-4">
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          {error}
-        </div>
-      )}
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="flex gap-4">
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="新しいタスクを追加"
-          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="新しいタスクを入力..."
+          className="flex-1 p-2 border rounded"
+          disabled={loading}
         />
         <button
           type="submit"
-          className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-colors"
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+          disabled={loading || !title.trim()}
         >
-          タスクを追加
+          {loading ? '追加中...' : '追加'}
         </button>
-      </form>
-    </div>
+      </div>
+    </form>
   );
 } 
