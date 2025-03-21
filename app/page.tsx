@@ -122,9 +122,9 @@ function TaskBoard() {
   }
 
   return (
-    <Container maxW="container.lg" px={4} centerContent>
-      <Flex direction="column" w="100%" maxW="800px" align="center">
-        <VStack as="header" w="100%" textAlign="center" mb={8} spacing={1}>
+    <Container maxW="100%" px={0} centerContent>
+      <Flex direction="column" w="100%" maxW="540px" align="center">
+        <VStack as="header" w="100%" textAlign="center" mb={8} spacing={1} px={4}>
           <Heading as="h1" size="2xl" color="brand.600" fontWeight="extrabold">
             Task Board
           </Heading>
@@ -133,13 +133,13 @@ function TaskBoard() {
           </Text>
         </VStack>
 
-        <Box as="main" w="100%">
+        <Box as="main" w="60%" px={4}>
           <TaskForm groupId={groupId} />
           <Divider my={6} />
           <TaskList groupId={groupId} />
         </Box>
-
-        <Center as="footer" w="100%" mt={8} py={4} color="gray.500" fontSize="sm">
+        
+        <Center as="footer" w="100%" mt={8} py={4} color="gray.500" fontSize="sm" px={4}>
           <Text>Powered by Next.js</Text>
         </Center>
       </Flex>
